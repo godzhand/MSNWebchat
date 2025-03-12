@@ -1,0 +1,7 @@
+
+# Enable directory listing if index.php is missing
+Options +Indexes
+DirectoryIndex index.php index.html index.htm
+AddType audio/wav .wav
+AddType audio/mpeg .mp3
+AddType audio/ogg .ogg

@@ -1,0 +1,929 @@
+
+
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+.tabs {
+    display: flex;
+    justify-content: center;
+    background-color: #333;
+    overflow: hidden;
+}
+
+.tablink {
+    background-color: #555;
+    color: white;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 20px;
+    font-size: 17px;
+    flex: 1;
+}
+
+.tablink:hover {
+    background-color: #777;
+}
+
+.tablink.active {
+    background-color: #111;
+}
+
+.tabcontent {
+    display: none;
+    padding: 20px;
+    height: calc(100vh - 50px);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* ==================== General Styles ==================== */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    height: 100vh;
+    overflow: hidden;
+}
+
+
+/* ==================== Global Styles ==================== */
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+}
+
+body {
+  overflow-y: auto; /* Enable vertical scrolling */
+}
+
+/* ==================== Room List Styles ==================== */
+.roomlist-body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.roomlist-container {
+    width: 100%;
+    max-width: 1200px;
+    background: #fff;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.roomlist-h1, .roomlist-h2 {
+    text-align: center;
+    color: #333;
+}
+
+.roomlist-h1 {
+    font-size: 2.5em;
+    margin: 0;
+}
+
+.roomlist-h2 {
+    font-size: 2em;
+    margin: 20px 0;
+}
+
+.roomlist-category-dropdown {
+    margin-bottom: 10px;
+}
+
+.roomlist-category-dropdown select {
+    padding: 10px;
+    font-size: 1.2em;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    width: 100%;
+    max-width: 400px;
+}
+
+.roomlist-create-channel-link {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.roomlist-create-channel-link a {
+    font-size: 0.9em;
+    color: #0078d7;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.roomlist-create-channel-link a:hover {
+    text-decoration: underline;
+}
+
+.roomlist-room-list {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    flex-grow: 1;
+    overflow-x: auto;
+}
+
+.roomlist-room-list th, .roomlist-room-list td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    font-size: 1.1em;
+}
+
+.roomlist-room-list th {
+    background-color: #f8f8f8;
+    font-size: 1.2em;
+}
+
+.roomlist-room-list tr {
+    background-color: #e3e3d270; /* Pinkish tan */
+}
+
+.roomlist-room-list tr:nth-child(even) {
+    background-color: #feffed; /* Darker tan for even rows */
+}
+
+.roomlist-room-list tr:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+.roomlist-pagination, .roomlist-pagination2 {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.roomlist-pagination button {
+    margin: 9px;
+}
+
+.roomlist-pagination a, .roomlist-pagination2 a {
+    margin: 0 10px;
+    text-decoration: none;
+    color: #333;
+    font-size: 1.1em;
+    padding: 10px 15px;
+    display: inline-block;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.roomlist-pagination a:hover, .roomlist-pagination2 a:hover {
+    color: #0078d7;
+    background-color: #f0f0f0;
+}
+
+.roomlist-room-list a {
+    text-decoration: none;
+    color: #0078d7;
+    font-weight: bold;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    transition: color 0.3s ease;
+}
+
+.roomlist-room-list a:hover {
+    color: #005a8a;
+}
+
+.roomlist-nickname-container {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.roomlist-nickname-display {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #333;
+    margin-right: 10px;
+}
+
+.roomlist-nickname-edit {
+    font-size: 1em;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.roomlist-nickname-save {
+    padding: 5px 10px;
+    font-size: 1em;
+    background-color: #0078d7;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.roomlist-nickname-save:hover {
+    background-color: #005a8a;
+}
+
+/* ==================== Chat Window Styles ==================== */
+.chatroom-body {
+    font-family: "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    font-size: 14px;
+}
+
+.chatroom-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #97bdff, #6a8fcc);
+    border-bottom: 1px solid #ccc;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.chatroom-header .channel-name {
+    font-size: 18px;
+    color: #ffffff;
+    font-weight: normal;
+}
+
+.chatroom-header #user-count {
+    right: 6%;
+    top: 36px;
+    position: absolute;
+    font-size: 14px;
+    color: #ffffff;
+}
+
+.chatroom-chat-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 60px);
+    overflow: hidden;
+}
+
+.chatroom-chat-box {
+    flex: 1;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: scroll;
+    scrollbar-width: thin;
+    scrollbar-color: #6a8fcc #f9f9f9;
+    max-height: 84%;
+    margin-bottom: 63px;
+}
+
+.chatroom-chat-box::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chatroom-chat-box::-webkit-scrollbar-track {
+    background: #f9f9f9;
+}
+
+.chatroom-chat-box::-webkit-scrollbar-thumb {
+    background: #6a8fcc;
+    border-radius: 4px;
+}
+
+.chatroom-chat-box::-webkit-scrollbar-thumb:hover {
+    background: #97bdff;
+}
+
+.chatroom-chat-box p {
+    margin: 0 0 -1px 0;
+    color: #333;
+    line-height: 1.5;
+}
+
+.chatroom-chat-input-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 77%;
+    background-color: #feffed;
+    padding: 10px;
+    box-sizing: border-box;
+    border-top: 2px solid #ccc;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1;
+}
+
+.chatroom-chat-input {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #999;
+    border-radius: 5px;
+    font-size: 14px;
+    background-color: #f9f9f9;
+    color: #333;
+    outline: none;
+}
+
+.chatroom-chat-input:focus {
+    border-color: #6a8fcc;
+    background-color: #fff;
+}
+
+.chatroom-send-button {
+    padding: 10px 20px;
+    background-color: #6a8fcc;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.chatroom-send-button:hover {
+    background-color: #97bdff;
+}
+
+.chatroom-nicklist {
+    flex: 1;
+    padding: 20px;
+    background-color: #FFFFFF;
+    border-left: 1px solid #ccc;
+    overflow-y: auto;
+    -ms-overflow-style: none;
+    position: fixed;
+    top: 60px;
+    right: -80%;
+    height: calc(100vh - 60px);
+    transition: right 0.3s ease-in-out;
+    color: #000000;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.chatroom-nicklist h3 {
+    margin-top: 0;
+    font-size: 16px;
+    color: #fff;
+}
+
+.chatroom-nicklist ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.chatroom-nicklist ul li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    margin: 0;
+    font-size: 14px;
+    position: relative;
+    left: -7px;
+}
+
+.chatroom-nicklist ul li::before {
+    content: "";
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background-image: url('MSN/modes.png');
+    background-repeat: no-repeat;
+    position: relative;
+    top: -1px;
+    left: 5px;
+}
+
+.chatroom-nicklist ul li.owner::before {
+    background-position: -16px 0;
+}
+
+.chatroom-nicklist ul li.host::before {
+    background-position: -32px 0;
+}
+
+.chatroom-nicklist ul li.participant::before {
+    background-position: -112px 0;
+}
+
+.chatroom-nicklist ul li.spectator::before {
+    background-position: -48px 0;
+}
+
+.chatroom-toggle-nicklist.desktop-only {
+    display: none;
+    background-color: transparent;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px;
+    margin-right: 10px;
+}
+
+.chatroom-toggle-nicklist.mobile-only {
+    display: none;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    background-color: #fff;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease;
+}
+
+.chatroom-toggle-nicklist.mobile-only:hover {
+    background-color: #f0f0f0;
+}
+
+.chatroom-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.chatroom-modal-content {
+    background-color: #ece9d8;
+    margin: 10% auto;
+    padding: 20px;
+    border: 2px solid #003c74;
+    width: 250px;
+    font-family: "MS Sans Serif", "Tahoma", sans-serif;
+    font-size: 12px;
+    color: #000;
+    box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+}
+
+.chatroom-close-modal {
+    color: #000;
+    float: right;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.chatroom-close-modal:hover,
+.chatroom-close-modal:focus {
+    color: #003c74;
+}
+
+.chatroom-host-keyword-input {
+    width: 100%;
+    padding: 6px;
+    margin: 10px 0;
+    border: 1px solid #003c74;
+    background-color: #fff;
+    font-family: "MS Sans Serif", "Tahoma", sans-serif;
+    font-size: 12px;
+    color: #000;
+    outline: none;
+}
+
+.chatroom-host-keyword-input:focus {
+    border-color: #0078d7;
+}
+
+.chatroom-win2k-btn {
+    padding: 6px 12px;
+    border: 1px solid #003c74;
+    background-color: #ece9d8;
+    font-family: "MS Sans Serif", "Tahoma", sans-serif;
+    font-size: 12px;
+    color: #000;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.chatroom-win2k-btn:hover {
+    background-color: #d4d0c8;
+}
+
+.chatroom-win2k-btn:active {
+    background-color: #c0c0c0;
+    border-color: #000;
+}
+
+.chatroom-modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.chatroom-context-menu {
+    max-width: calc(100vw - 20px);
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+.chatroom-context-menu {
+    display: none;
+    position: absolute;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    min-width: 160px;
+}
+
+.chatroom-context-menu ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.chatroom-context-menu ul li {
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.chatroom-context-menu ul li:hover {
+    background-color: #f0f0f0;
+}
+
+.chatroom-context-menu ul li.separator {
+    border-bottom: 1px solid #ccc;
+    padding: 0;
+    margin: 8px 0;
+}
+
+.chatroom-context-menu ul li.submenu {
+    position: relative;
+}
+
+.chatroom-context-menu ul li.submenu ul {
+    display: none;
+    position: absolute;
+    left: 100%;
+    top: 0;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    min-width: 160px;
+}
+
+.chatroom-context-menu ul li.submenu:hover ul {
+    display: block;
+}
+
+/* ==================== Create Channel Styles ==================== */
+.createchannel-body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: auto;
+}
+
+.createchannel-container {
+    width: 100%;
+    max-width: 800px; /* Adjusted for better desktop and mobile fit */
+    background: #fff;
+    padding: 30px; /* Increased padding for better spacing */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    margin: 20px;
+}
+
+.createchannel-h1 {
+    font-size: 2em;
+    text-align: center;
+    color: #333;
+    margin: 0 0 20px 0;
+}
+
+.createchannel-h2 {
+    font-size: 1.5em;
+    text-align: center;
+    color: #333;
+    margin: 0 0 20px 0;
+}
+
+.createchannel-return-link {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.createchannel-return-link a {
+    font-size: 0.9em;
+    color: #0078d7;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.createchannel-return-link a:hover {
+    color: #005bb5;
+}
+
+.createchannel-form-section {
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    background-color: #feffed;
+}
+
+.createchannel-form-group {
+    margin-bottom: 20px;
+}
+
+.createchannel-form-group label {
+    display: block;
+    font-size: 1em;
+    color: #34495e;
+    margin-bottom: 8px;
+}
+
+.createchannel-form-group input,
+.createchannel-form-group textarea,
+.createchannel-form-group select {
+    width: 100%;
+    padding: 10px;
+    font-size: 0.9em;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: #fff;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.createchannel-form-group input:focus,
+.createchannel-form-group textarea:focus,
+.createchannel-form-group select:focus {
+    border-color: #0078d7;
+    box-shadow: 0 0 8px rgba(0, 120, 215, 0.2);
+    outline: none;
+}
+
+/* Specific adjustments for textboxes */
+.createchannel-form-group input[type="text"] {
+    max-width: 400px; /* Narrower for nickname and channel name */
+}
+
+.createchannel-form-group textarea {
+    resize: vertical;
+    height: 120px;
+    background-color: #f9f9f9; /* More defined background for topic box */
+    border: 1px solid #ccc; /* More defined border for topic box */
+}
+
+.createchannel-horizontal-group {
+    display: flex;
+    gap: 15px;
+}
+
+.createchannel-tooltip {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.createchannel-tooltip.show {
+    opacity: 1;
+}
+
+.createchannel-navigation-buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.createchannel-navigation-buttons button {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 1em;
+    color: #0078d7;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.createchannel-navigation-buttons button:hover {
+    color: #005bb5;
+}
+
+/* ==================== Responsive Design ==================== */
+@media (max-width: 768px) {
+    .createchannel-container {
+        padding: 20px; /* Slightly reduced padding for mobile */
+        margin: 10px;
+    }
+
+    .createchannel-h1 {
+        font-size: 1.8em;
+    }
+
+    .createchannel-h2 {
+        font-size: 1.3em;
+    }
+
+    .createchannel-form-group input,
+    .createchannel-form-group textarea,
+    .createchannel-form-group select {
+        padding: 8px;
+        font-size: 0.85em;
+    }
+
+    .createchannel-form-group input[type="text"] {
+        max-width: 100%; /* Full width on mobile */
+    }
+
+    .createchannel-form-group textarea {
+        height: 100px;
+    }
+
+    .createchannel-horizontal-group {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .createchannel-h1 {
+        font-size: 1.5em;
+    }
+
+    .createchannel-h2 {
+        font-size: 1.1em;
+    }
+
+    .createchannel-form-group label {
+        font-size: 0.9em;
+    }
+
+    .createchannel-form-group input,
+    .createchannel-form-group textarea,
+    .createchannel-form-group select {
+        padding: 6px;
+        font-size: 0.8em;
+    }
+
+    .createchannel-form-group textarea {
+        height: 80px;
+    }
+    form {
+        width: 90%;
+    }
+}
+/* ==================== Responsive Design ==================== */
+@media (max-width: 768px) {
+    .roomlist-h1 {
+        font-size: 2em;
+    }
+
+    .roomlist-h2 {
+        font-size: 1.5em;
+    }
+
+    .roomlist-category-dropdown select {
+        font-size: 1em;
+        padding: 8px;
+    }
+
+    .roomlist-room-list th, .roomlist-room-list td {
+        padding: 10px;
+        font-size: 0.9em;
+    }
+
+    .roomlist-room-list th {
+        font-size: 1em;
+    }
+
+    .roomlist-pagination a, .roomlist-pagination2 a {
+        padding: 8px 12px;
+        font-size: 1em;
+    }
+
+    .chatroom-header #user-count {
+        display: none;
+    }
+
+    .chatroom-chat-input-container #user-count {
+        display: block;
+        font-size: 12px;
+        color: #6a8fcc;
+        margin-right: 10px;
+    }
+
+    .chatroom-nicklist {
+        right: -99%;
+    }
+
+    .chatroom-nicklist.open {
+        right: 0;
+    }
+
+    .chatroom-toggle-nicklist.desktop-only {
+        display: none;
+    }
+
+    .chatroom-toggle-nicklist.mobile-only {
+        display: block;
+    }
+
+    .createchannel-h1 {
+        font-size: 2em;
+    }
+
+    .createchannel-container {
+        padding: 20px;
+    }
+
+    .createchannel-form-group input,
+    .createchannel-form-group textarea,
+    .createchannel-form-group select {
+        padding: 10px;
+        font-size: 0.9em;
+    }
+
+    .createchannel-navigation-buttons button {
+        font-size: 0.9em;
+    }
+
+    .createchannel-horizontal-group {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .roomlist-h1 {
+        font-size: 1.5em;
+    }
+
+    .roomlist-h2 {
+        font-size: 1.2em;
+    }
+
+    .roomlist-category-dropdown select {
+        font-size: 0.9em;
+        padding: 6px;
+    }
+
+    .roomlist-room-list th, .roomlist-room-list td {
+        padding: 8px;
+        font-size: 0.8em;
+    }
+
+    .roomlist-room-list th {
+        font-size: 0.9em;
+    }
+
+    .roomlist-pagination a, .roomlist-pagination2 a {
+        padding: 6px 10px;
+        font-size: 0.9em;
+    }
+
+    .createchannel-h1 {
+        font-size: 1.8em;
+    }
+
+    .createchannel-form-group label {
+        font-size: 1em;
+    }
+
+    .createchannel-form-group textarea {
+        height: 80px;
+    }
+}

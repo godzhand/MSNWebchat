@@ -1,0 +1,662 @@
+/* Custom animation for TIME replies */
+@keyframes time-reply-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-15px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Apply animation via this class */
+.time-reply-animate {
+  animation: time-reply-fade-in 0.6s ease-out;
+}
+
+
+/* General Styles */
+body {
+    font-family: "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    font-size: 14px;
+}
+
+a {
+    text-decoration: underline;
+    color: inherit;
+}
+
+a:hover {
+    color: #0078d7;
+}
+
+/* Header Styles */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #97bdff, #6a8fcc);
+    border-bottom: 1px solid #ccc;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.header .channel-name {
+    font-size: 18px;
+    color: #ffffff;
+    font-weight: normal;
+}
+
+.header #user-count {
+    font-size: 14px;
+    color: #ffffff;
+}
+
+/* Chat Container Styles */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 60px);
+    overflow: hidden;
+}
+
+.chat-box {
+    flex: 1;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #6a8fcc #f9f9f9;
+    max-height: 84%;
+}
+
+.chat-box::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-box::-webkit-scrollbar-track {
+    background: #f9f9f9;
+}
+
+.chat-box::-webkit-scrollbar-thumb {
+    background: #6a8fcc;
+    border-radius: 4px;
+}
+
+.chat-box::-webkit-scrollbar-thumb:hover {
+    background: #97bdff;
+}
+
+.chat-box p {
+    margin: 0 0 -1px 0;
+    color: #333;
+    line-height: 1.5;
+}
+
+.chat-box p:first-child {
+    color: #379637;
+}
+
+.chat-box p:nth-child(2) {
+    color: #FF0000;
+}
+
+.chat-box p:nth-child(5)::before {
+    color: rgb(209, 255, 5);
+}
+
+.chat-box p:nth-child(6)::before {
+    color: rgb(0, 16, 247);
+}
+
+.chat-box p:nth-child(7)::before {
+    color: rgb(0, 0, 0);
+}
+
+/* Chat Input Container Styles */
+.chat-input-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 77%;
+    background-color: #feffed;
+    padding: 10px;
+    box-sizing: border-box;
+    border-top: 2px solid #ccc;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1;
+}
+
+#chat-input {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #999;
+    border-radius: 5px;
+    font-size: 14px;
+    background-color: #f9f9f9;
+    color: #333;
+    outline: none;
+}
+
+#chat-input:focus {
+    border-color: #6a8fcc;
+    background-color: #fff;
+}
+
+#send-button {
+    padding: 10px 20px;
+    background-color: #6a8fcc;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#send-button:hover {
+    background-color: #97bdff;
+}
+
+/* Nicklist Styles */
+
+.nicklist ul li {
+    cursor: default; /* Prevents the mouse icon from changing */
+    padding: 5px 0;
+    margin: 0;
+    font-size: 14px;
+    user-select: none; /* Prevent text selection */
+    -webkit-user-select: none; /* For Chrome and Safari */
+    -moz-user-select: none; /* For Firefox */
+    -ms-user-select: none; /* For IE/Edge */
+}
+
+.nicklist ul li.selected {
+    background-color: #9093b1; /* Highlight color */
+    color: #fff; /* Text color for selected items */
+}
+
+.nicklist ul li {
+    cursor: default; /* Prevents the mouse icon from changing */
+    padding: 5px 0;
+    margin: 0;
+    font-size: 14px;
+    user-select: none; /* Prevent text selection */
+}
+
+.nicklist ul li.selected {
+    background-color: #97a0c6; /* Highlight color */
+    color: #fff; /* Text color for selected items */
+    position: relative;
+   
+    /* width: 106px; */
+}
+
+.nicklist {
+    flex: 1;
+    padding: 20px;
+    background-color: #FFFFFF;
+    border-left: 1px solid #ccc;
+    overflow-y: auto;
+    -ms-overflow-style: none;
+    position: fixed;
+    top: 60px;
+    right: -80%;
+    height: calc(100vh - 60px);
+    transition: right 0.3s ease-in-out;
+    color: #000000;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.nicklist h3 {
+    margin-top: 0;
+    font-size: 16px;
+    color: #fff;
+}
+
+.nicklist ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.nicklist ul li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    margin: 0;
+    font-size: 14px;
+    position: relative;
+    left: -7px;
+}
+
+.nicklist ul li::before {
+    content: "";
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background-image: url('MSN/modes.png');
+    background-repeat: no-repeat;
+    position: relative;
+    top: -1px;
+    left: 5px;
+}
+
+/* Owner */
+.nicklist ul li.owner::before {
+    background-position: -16px 0;
+}
+
+/* Host */
+.nicklist ul li.host::before {
+    background-position: -32px 0;
+}
+
+/* Participant */
+.nicklist ul li.participant::before {
+    background-position: -112px 0;
+}
+
+/* Spectator */
+.nicklist ul li.spectator::before {
+    background-position: -48px 0;
+}
+
+/* Toggle Button Styles */
+.toggle-nicklist.desktop-only {
+    display: none;
+    background-color: transparent;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px;
+    margin-right: 10px;
+}
+
+.toggle-nicklist.mobile-only {
+    display: none;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    background-color: #fff;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease;
+}
+
+.toggle-nicklist.mobile-only:hover {
+    background-color: #f0f0f0;
+}
+
+/* Modal Styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.5); /* Black w/ opacity */
+}
+
+.modal-content {
+    background-color: #ece9d8; /* Classic Windows 2000 background color */
+    margin: 10% auto; /* Centered */
+    padding: 20px;
+    border: 2px solid #003c74; /* Dark blue border */
+    width: 250px; /* Smaller width */
+    font-family: "MS Sans Serif", "Tahoma", sans-serif; /* Classic Windows font */
+    font-size: 12px; /* Smaller font size */
+    color: #000; /* Black text */
+    box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+}
+
+.close-modal {
+    color: #000; /* Black close button */
+    float: right;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-modal:hover,
+.close-modal:focus {
+    color: #003c74; /* Dark blue on hover */
+}
+
+/* Input Field Styles */
+#host-keyword-input {
+    width: 100%;
+    padding: 6px;
+    margin: 10px 0;
+    border: 1px solid #003c74; /* Dark blue border */
+    background-color: #fff; /* White background */
+    font-family: "MS Sans Serif", "Tahoma", sans-serif;
+    font-size: 12px;
+    color: #000; /* Black text */
+    outline: none;
+}
+
+#host-keyword-input:focus {
+    border-color: #0078d7; /* Light blue on focus */
+}
+
+/* Button Styles */
+.win2k-btn {
+    padding: 6px 12px;
+    border: 1px solid #003c74; /* Dark blue border */
+    background-color: #ece9d8; /* Light gray background */
+    font-family: "MS Sans Serif", "Tahoma", sans-serif;
+    font-size: 12px;
+    color: #000; /* Black text */
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.win2k-btn:hover {
+    background-color: #d4d0c8; /* Slightly darker gray on hover */
+}
+
+.win2k-btn:active {
+    background-color: #c0c0c0; /* Even darker gray on click */
+    border-color: #000; /* Black border on click */
+}
+
+/* Modal Buttons Container */
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right */
+    gap: 8px; /* Space between buttons */
+    margin-top: 20px;
+}
+.context-menu {
+    max-width: calc(100vw - 20px); /* Prevent menu from reaching window edge */
+    padding: 5px; /* Optional internal padding */
+    box-sizing: border-box;
+}
+
+.context-menu {
+    display: none;
+    position: absolute;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    min-width: 160px; /* Ensure minimum width for readability */
+}
+
+.context-menu ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.context-menu ul li {
+    padding: 12px 16px; /* Increase padding for easier tapping */
+    cursor: pointer;
+    font-size: 16px; /* Increase font size for readability */
+}
+
+.context-menu ul li:hover {
+    background-color: #f0f0f0;
+}
+
+.context-menu ul li.separator {
+    border-bottom: 1px solid #ccc;
+    padding: 0;
+    margin: 8px 0; /* Increase margin for better separation */
+}
+
+.context-menu ul li.submenu {
+    position: relative;
+}
+
+.context-menu ul li.submenu ul {
+    display: none;
+    position: absolute;
+    left: 100%;
+    top: 0;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    min-width: 160px; /* Ensure submenu has enough width */
+}
+
+.context-menu ul li.submenu:hover ul {
+    display: block;
+}
+
+/* Adjust submenu position for mobile */
+@media (max-width: 768px) {
+    .context-menu ul li.submenu ul {
+        left: auto;
+        right: 100%; /* Move submenu to the left of the parent menu */
+    }
+
+    .context-menu {
+        font-size: 14px; /* Slightly smaller font size for mobile */
+    }
+}
+/* Media Queries */
+@media (min-width: 769px) {
+    .toggle-nicklist.desktop-only {
+        display: block;
+    }
+}
+
+@media (max-width: 768px) {
+    .header #user-count {
+        display: none;
+    }
+
+    .chat-input-container #user-count {
+        display: block;
+        font-size: 12px;
+        color: #6a8fcc;
+        margin-right: 10px;
+    }
+
+    .nicklist {
+        right: -99%;
+    }
+
+    .nicklist.open {
+        right: 0;
+    }
+
+    .toggle-nicklist.desktop-only {
+        display: none;
+    }
+
+    .toggle-nicklist.mobile-only {
+        display: block;
+    }
+}
+
+@media (max-width: 857px) {
+    .nicklist {
+       width: 18%;
+    right: 0%;
+    max-height: 59%;
+    }
+
+    .nicklist.open {
+        right: 6%;
+    }
+}
+
+@media (min-width: 1079px) {
+    .toggle-nicklist.mobile-only {
+        display: block;
+        position: relative;
+        right: -8px;
+        top: -1px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .nicklist {
+        width: 25%;
+        right: -8%;
+    }
+
+    .nicklist.open {
+        right: -170px;
+    }
+
+    .chat-box {
+        width: 75%;
+    }
+}
+
+@media (min-width: 1440px) and (max-width: 1919px) {
+    .nicklist {
+        width: 14%;
+        right: 0%;
+    }
+
+    .nicklist.open {
+        right: -170px;
+    }
+
+    .chat-box {
+        width: 70%;
+    }
+}
+
+@media (min-width: 1920px) {
+
+
+.chat-input-container {
+	width: 77%;
+
+	}
+    .nicklist {
+        width: 18%;
+        right: 0%;
+	max-height: 78%;
+    }
+
+    .nicklist.open {
+        right: 0;
+    }
+
+    .chat-box {
+        width: 80%;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+    .nicklist {
+        width: 40%;
+        left: 100%;
+    }
+
+    .nicklist.open {
+        right: 0;
+    }
+
+    .chat-box {
+        width: 60%;
+    }
+}
+
+@media (max-width: 384px) {
+
+.chat-input-container {
+width: 100%;
+}
+
+    .nicklist {
+        right: 99%;
+	overflow-y: scroll;
+	max-height: 80%;
+    }
+
+    .nicklist.open {
+        right: 4%;
+	 width: 80%;
+    }
+}
+
+/* Animation */
+@keyframes glitchy-fade-in {
+    0% {
+        opacity: 0;
+        transform: translateY(-5px);
+        color: rgba(0, 0, 0, 0);
+    }
+    20% {
+        opacity: 0.8;
+        transform: translateY(2px);
+        color: rgba(0, 0, 255, 0.8);
+    }
+    40% {
+        opacity: 0.6;
+        transform: translateY(-2px);
+        color: rgba(0, 0, 0, 0.8);
+    }
+    60% {
+        opacity: 0.8;
+        transform: translateY(1px);
+        color: rgba(128, 128, 128, 0.8);
+    }
+    80% {
+        opacity: 0.7;
+        transform: translateY(-1px);
+        color: rgba(0, 0, 255, 0.8);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        color: gray;
+    }
+}
+
+.glitchy-fade-in {
+    animation: glitchy-fade-in 1.5s ease-in-out;
+}
+
+
+@keyframes glitch {
+    0% {
+        transform: translate(0);
+    }
+    20% {
+        transform: translate(-2px, 2px);
+    }
+    40% {
+        transform: translate(2px, -2px);
+    }
+    60% {
+        transform: translate(-2px, 2px);
+    }
+    80% {
+        transform: translate(2px, -2px);
+    }
+    100% {
+        transform: translate(0);
+    }
+}
+
+.glitch-effect {
+    animation: glitch 0.5s linear; /* Glitch animation */
+    position: relative;
+    display: inline-block;
+    color: gray;
+}

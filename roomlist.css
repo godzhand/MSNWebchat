@@ -1,0 +1,414 @@
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin: 0;
+        }
+        h2 {
+            font-size: 2em;
+            margin: 20px 0;
+        }
+        .category-dropdown {
+            margin-bottom: 10px;
+        }
+        .category-dropdown select {
+            padding: 10px;
+            font-size: 1.2em;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            width: 100%;
+            max-width: 400px;
+        }
+        .create-channel-link {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .create-channel-link a {
+            font-size: 0.9em;
+            color: #0078d7;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .create-channel-link a:hover {
+            text-decoration: underline;
+        }
+        .room-list {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            flex-grow: 1;
+            overflow-x: auto;
+        }
+        .room-list th, .room-list td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-size: 1.1em;
+        }
+        .room-list th {
+            background-color: #f8f8f8;
+            font-size: 1.2em;
+        }
+        .room-list tr {
+            background-color: #e3e3d270; /* Pinkish tan */
+        }
+        .room-list tr:nth-child(even) {
+            background-color: #feffed; /* Darker tan for even rows */
+        }
+        .room-list tr:hover {
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+        .pagination, .pagination2 {
+            text-align: center;
+            margin-top: 20px;
+
+        }
+        .pagination button {
+            margin: 9px;
+        }
+        .pagination {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #333;
+            font-size: 1.1em;
+            padding: 10px 15px;
+            display: inline-block;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+        .pagination a, .pagination2 a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #333;
+            font-size: 1.1em;
+            padding: 10px 15px;
+            display: inline-block;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+        .pagination a:hover, .pagination2 a:hover {
+            color: #0078d7;
+            background-color: #f0f0f0;
+        }
+
+
+        .room-list a {
+    text-decoration: none; /* Removes underline */
+    color: #0078d7; /* Gives a nice blue color */
+    font-weight: bold; /* Makes the text bold */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Uses a nice font */
+    transition: color 0.3s ease; /* Smooth transition on hover */
+}
+
+.room-list a:hover {
+    color: #005a8a; /* Darker blue on hover */
+}
+
+        /* Responsive Design */
+        @media (max-width: 858px) {
+            .create-channel-link {
+                position: relative;
+                top: 29px;
+            }
+            .pagination a, .pagination2 a {
+                padding: 8px 12px;
+                font-size: 1em;
+            }
+        }
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            h2 {
+                font-size: 1.5em;
+            }
+            .category-dropdown select {
+                font-size: 1em;
+                padding: 8px;
+            }
+            .room-list th, .room-list td {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+            .room-list th {
+                font-size: 1em;
+            }
+            .pagination a, .pagination2 a {
+                padding: 8px 12px;
+                font-size: 1em;
+            }
+        }
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5em;
+            }
+            h2 {
+                font-size: 1.2em;
+            }
+            .category-dropdown select {
+                font-size: 0.9em;
+                padding: 6px;
+            }
+            .room-list th, .room-list td {
+                padding: 8px;
+                font-size: 0.8em;
+            }
+            .room-list th {
+                font-size: 0.9em;
+            }
+            .pagination a, .pagination2 a {
+                padding: 6px 10px;
+                font-size: 0.9em;
+            }
+        }
+        @media (max-width: 385px) {
+            .pagination {
+                position: relative;
+                top: 9px;
+                left: 20px;
+            }
+        }
+ 
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin: 0;
+        }
+        h2 {
+            font-size: 2em;
+            margin: 20px 0;
+        }
+        .category-dropdown {
+            margin-bottom: 10px;
+        }
+        .category-dropdown select {
+            padding: 10px;
+            font-size: 1.2em;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            width: 100%;
+            max-width: 400px;
+        }
+        .create-channel-link {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .create-channel-link a {
+            font-size: 0.9em;
+            color: #0078d7;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .create-channel-link a:hover {
+            text-decoration: underline;
+        }
+        .room-list {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            flex-grow: 1;
+            overflow-x: auto;
+        }
+        .room-list th, .room-list td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-size: 1.1em;
+        }
+        .room-list th {
+            background-color: #f8f8f8;
+            font-size: 1.2em;
+        }
+        .room-list tr {
+            background-color: #e3e3d270; /* Pinkish tan */
+        }
+        .room-list tr:nth-child(even) {
+            background-color: #feffed; /* Darker tan for even rows */
+        }
+        .room-list tr:hover {
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+        .pagination, .pagination2 {
+            text-align: center;
+            margin-top: 20px;
+
+        }
+        .pagination button {
+            margin: 9px;
+        }
+        .pagination {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #333;
+            font-size: 1.1em;
+            padding: 10px 15px;
+            display: inline-block;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+        .pagination a, .pagination2 a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #333;
+            font-size: 1.1em;
+            padding: 10px 15px;
+            display: inline-block;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+        .pagination a:hover, .pagination2 a:hover {
+            color: #0078d7;
+            background-color: #f0f0f0;
+        }
+
+
+        .room-list a {
+    text-decoration: none; /* Removes underline */
+    color: #0078d7; /* Gives a nice blue color */
+    font-weight: bold; /* Makes the text bold */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Uses a nice font */
+    transition: color 0.3s ease; /* Smooth transition on hover */
+}
+
+.room-list a:hover {
+    color: #005a8a; /* Darker blue on hover */
+}
+
+        /* Responsive Design */
+        @media (max-width: 858px) {
+            .create-channel-link {
+                position: relative;
+                top: 29px;
+            }
+            .pagination a, .pagination2 a {
+                padding: 8px 12px;
+                font-size: 1em;
+            }
+        }
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            h2 {
+                font-size: 1.5em;
+            }
+            .category-dropdown select {
+                font-size: 1em;
+                padding: 8px;
+            }
+            .room-list th, .room-list td {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+            .room-list th {
+                font-size: 1em;
+            }
+            .pagination a, .pagination2 a {
+                padding: 8px 12px;
+                font-size: 1em;
+            }
+        }
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5em;
+            }
+            h2 {
+                font-size: 1.2em;
+            }
+            .category-dropdown select {
+                font-size: 0.9em;
+                padding: 6px;
+            }
+            .room-list th, .room-list td {
+                padding: 8px;
+                font-size: 0.8em;
+            }
+            .room-list th {
+                font-size: 0.9em;
+            }
+            .pagination a, .pagination2 a {
+                padding: 6px 10px;
+                font-size: 0.9em;
+            }
+        }
+        @media (max-width: 385px) {
+            .pagination {
+                position: relative;
+                top: 9px;
+                left: 20px;
+            }
+        }
+
+        /* Add this to your existing CSS */
+        .nickname-container {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .nickname-display {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-right: 10px;
+        }
+        .nickname-edit {
+            font-size: 1em;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        .nickname-save {
+            padding: 5px 10px;
+            font-size: 1em;
+            background-color: #0078d7;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .nickname-save:hover {
+            background-color: #005a8a;
+        }

@@ -107,6 +107,10 @@ $ownerkey = htmlspecialchars($_POST['ownerkey'] ?? 'No Ownerkey');
         <source src="sounds/sounds/WAVE351.3.mp3" type="audio/mp3">
         Your browser does not support the audio element.
     </audio>
+    <audio id="kick-sound">
+        <source src="sounds/sounds/kick.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
     <script>
         // Pass PHP variables to JavaScript
         const category = "<?php echo $category; ?>";

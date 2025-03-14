@@ -293,7 +293,10 @@ a:hover {
     background-position: -48px 0;
     display: none;
 }
-
+.nicklist ul li.member::before {
+    background-position: -48px 0;
+    display: none;
+}
 /* Toggle Button Styles */
 .toggle-nicklist.desktop-only {
     display: none;
@@ -645,7 +648,7 @@ width: 20%;
 
     .chat-box {
         width: 75%;
-        max-height: 88%;
+        max-height: 70%;
     }
 }
 

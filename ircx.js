@@ -262,6 +262,7 @@ wss.on('connection', (ws) => {
         client.once('socket connected', () => {
             console.log('✅ Socket connected to IRC.');
             client.raw('IRCX');
+            
         });
 
         client.on('raw', (event) => {
@@ -359,6 +360,7 @@ wss.on('connection', (ws) => {
                 wsClients.forEach((info, ws) => {
                     if (info.channel === channel && ws.readyState === WebSocket.OPEN && info.nickname === nickname) {
                         ws.send(JSON.stringify({ type: 'nicklist', users, userCount }));
+                        ws.send(JSON.stringify({ type: 'nicklist-count', users, userCount }));
                     }
                 
                 });
@@ -385,48 +387,49 @@ wss.on('connection', (ws) => {
                 if (nicklist.has(channel)) {
                     let users = nicklist.get(channel).filter(user => user !== nick); // Remove the user from the nicklist
                     let userCount = users.length;
-                    nicklist.set(channel, users);
+                 nicklist.set(channel, users);
 
                     wsClients.forEach((info, ws) => {
                         if (ws.readyState === WebSocket.OPEN && info.nickname === nickname) {
-                            ws.send(JSON.stringify({ type: 'nicklist', users, userCount }));
+                            ws.send(JSON.stringify({ type: 'nicklist-count', users, userCount }));
                         }
                     
                     });
                 }
             }
 
-            if (command === 'QUIT') {
-                let nick = parts[0].split('!')[0].slice(1); // Extract nickname
+            // if (command === 'QUIT') {
+            //     let nick = parts[0].split('!')[0].slice(1); // Extract nickname
 
-                console.log(`🚪 ${nick} quit IRC`);
+            //     console.log(`🚪 ${nick} quit IRC`);
 
-                // Remove the user from all channels they were in
-                nicklist.forEach((users, channel) => {
-                    if (users.includes(nick)) {
-                        let updatedUsers = users.filter(user => user !== nick); // Remove the user from the nicklist
-                        nicklist.set(channel, updatedUsers);
-                        let updatedUsersCount = updatedUsers.length;
-                     wsClients.forEach((info, ws) => {
-                            if (ws.readyState === WebSocket.OPEN && info.nickname === nickname) {
-                                ws.send(JSON.stringify({ type: 'nicklist', updatedUsers, updatedUsersCount }));
-                            }
+            //     // Remove the user from all channels they were in
+            //     nicklist.forEach((users, channel) => {
+            //         if (users.includes(nick)) {
+            //             let users = nicklist.get(channel).filter(user => user !== nick); // Remove the user from the nicklist
+            //             let userCount = users.length;
+            //              nicklist.set(channel, users);
+            //            // let updatedUsersCount = updatedUsers.length;
+            //          wsClients.forEach((info, ws) => {
+            //                 if (ws.readyState === WebSocket.OPEN && info.nickname === nickname) {
+            //                     ws.send(JSON.stringify({ type: 'nicklist-count', users, userCount }));
+            //                 }
                         
-                        });
-                        // Send the QUIT message only to the relevant WebSocket client
-                        wsClients.forEach((info, ws) => {
-                            if (info.client === client && ws.readyState === WebSocket.OPEN) {
-                                ws.send(JSON.stringify({
-                                    type: 'system',
-                                    message: `${nick} has left the channel`,
-                                    nickname: nick,
-                                    event: 'quit'
-                                }));
-                            }
-                        });
-                    }
-                });
-            }
+            //             });
+            //             // Send the QUIT message only to the relevant WebSocket client
+            //             wsClients.forEach((info, ws) => {
+            //                 if (info.client === client && ws.readyState === WebSocket.OPEN) {
+            //                     ws.send(JSON.stringify({
+            //                         type: 'system',
+            //                         message: `${nick} has quit out`,
+            //                         nickname: nick,
+            //                         event: 'quit'
+            //                     }));
+            //                 }
+            //             });
+            //         }
+            //     });
+            // }
         });
 
 
@@ -454,7 +457,7 @@ wss.on('connection', (ws) => {
             let userCount = nicklist.get(event.channel).length;
             wsClients.forEach((info, ws) => {
                 if (ws.readyState === WebSocket.OPEN && info.nickname === nickname) {
-                    ws.send(JSON.stringify({ type: 'nicklist', users, userCount }));
+                   ws.send(JSON.stringify({ type: 'nicklist-count', users, userCount }));
                 }
             
             });
@@ -465,21 +468,76 @@ wss.on('connection', (ws) => {
                         type: 'system',
                         message: `${event.nick} has joined the channel`,
                         nickname: event.nick,
-                        event: 'join'
+                     event: 'join'
                     }));
                 }
             });
         });
 
+        client.on('kick', (event) => {
+        
+            ///    console.dir(event, { depth: null, colors: true }); // Log the event object for debugging
+      /*       kicked: '₪ḠḺḮṪḈḤ₪',
+            nick: 'num',
+            ident: '806cd9595404',
+            hostname: 'ANON',
+            channel: '%#The\\bLobby',
+            message: '',
+            time: undefined,
+            tags: {},
+            batch: undefined */
+          
+
+            if (nicklist.has(event.channel)) {
+                let users = nicklist.get(event.channel).filter(user => user !== event.kicked); // Remove the user from the nicklist
+                let userCount = nicklist.get(event.channel).length;
+                wsClients.forEach((info, ws) => {
+                    if (ws.readyState === WebSocket.OPEN && info.nickname === nickname) {
+                       ws.send(JSON.stringify({ type: 'nicklist-count', users, userCount }));
+                    }
+                
+                });
+                nicklist.set(event.channel, users);
+                let msg = "";
+                // Broadcast updated nicklist to all clients in the channel
+               // sendNicklist(event.channel, users, users.length);
+
+                if (event.message != "") {
+                msg = `Host ${event.nick} has kicked ${event.kicked} out of the Channel (${event.message})`;
+                }
+                else {
+                msg = `Host ${event.nick} has kicked ${event.kicked} out of the Channel`;           
+                }       
+                // Send the PART message only to the relevant WebSocket client
+                wsClients.forEach((info, ws) => {
+                    if (info.client === client && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({
+                            type: 'system',
+                            message: msg,
+                            nickname: event.nick,
+                            knickname: event.kicked,
+                            reason: event.message,
+                            event: 'kick'
+                        }))
+                    }
+                })
+                }
+        });
         client.on('part', (event) => {
             console.log(`🚪 ${event.nick} left ${event.channel}`);
 
             if (nicklist.has(event.channel)) {
                 let users = nicklist.get(event.channel).filter(user => user !== event.nick); // Remove the user from the nicklist
+                let userCount = nicklist.get(event.channel).length;
                 nicklist.set(event.channel, users);
-
+                wsClients.forEach((info, ws) => {
+                    if (ws.readyState === WebSocket.OPEN && info.nickname === nickname) {
+                       ws.send(JSON.stringify({ type: 'nicklist-count', users, userCount }));
+                    }
+                
+                });
                 // Broadcast updated nicklist to all clients in the channel
-                sendNicklist(event.channel, users, users.length);
+              //  sendNicklist(event.channel, users, users.length);
 
                 // Send the PART message only to the relevant WebSocket client
                 wsClients.forEach((info, ws) => {
@@ -496,8 +554,36 @@ wss.on('connection', (ws) => {
         });
 
         client.on('quit', (event) => {
-            // console.log(`🚪 ${event.nick} quit IRC`);
+            console.log(event);
+            // Remove the user from all channels they were in
+            nicklist.forEach((users, channel) => {
+                if (users.includes(event.nick)) {
+                    let filteredUsers = users.filter(user => user !== event.nick); // Use a different variable name
+                    let userCount = filteredUsers.length;
+                    nicklist.set(channel, filteredUsers);
+        
+                    // Send the updated nicklist and user count to all relevant WebSocket clients
+                    wsClients.forEach((info, ws) => {
+                        if (ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify({ type: 'nicklist-count', users: filteredUsers, userCount }));
+                        }
+                    });
+                }
+                wsClients.forEach((info, ws) => {
+                    if (info.client === client && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({
+                            type: 'system',
+                            message: `${event.nick} has quit out${event.message ? ` (${event.message})` : ''}`,
+                            nickname: event.nick,
+                            reason: event.message,
+                            event: 'quit'
+                        }));
+                    }
+                });
+            });
         });
+            // Send the QUIT message only to the relevant WebSocket client
+
 
         client.on('message', (event) => {
             wsClients.forEach((info, ws) => {

@@ -1,864 +1,650 @@
-// ==================== Global Variables ====================
-let wss; // WebSocket connection for Chat Window
-let nickname; // User's nickname
-let userRoles = {}; // Tracks user roles in the chat
-let modeQueue = []; // Queue for mode change messages
-let isProcessing = false; // Flag for processing mode changes
-let currentMessageElement = null; // Current message element for animations
-let isUIReset = false; // Flag for UI reset on disconnect
-let isUserInteracted = false; // Flag for user interaction
-let reconnectAttempts = 0; // Reconnection attempts counter
-const maxReconnectAttempts = 5; // Max reconnection attempts
-const reconnectDelay = 5000; // Delay between reconnection attempts
-const soundQueue = []; // Queue for sound playback
-let isSoundPlaying = false; // Flag for sound playback
+const IRC = require('irc-framework');
+const http = require('http');
+const WebSocket = require('ws');
+const crypto = require('crypto');
 
-// ==================== Room List Functions ====================
-function initializeRoomList() {
-    const nicknameDisplay = document.getElementById('nicknameDisplay');
-    const nicknameEdit = document.getElementById('nicknameEdit');
-    const nicknameSave = document.getElementById('nicknameSave');
-    const nicknameEditButton = document.getElementById('nicknameEditButton');
 
-    // Function to generate a random nickname
-    function generateRandomNickname() {
-        const adjectives = ['Happy', 'Silly', 'Brave', 'Clever', 'Swift', 'Gentle', 'Witty', 'Calm', 'Bold', 'Lucky'];
-        const nouns = ['Cat', 'Dog', 'Fox', 'Bear', 'Wolf', 'Lion', 'Tiger', 'Eagle', 'Hawk', 'Owl'];
-        const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
-        const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
-        return `${randomAdjective}${randomNoun}${Math.floor(Math.random() * 100)}`;
-    }
+const ctcpRequests = new Map();
 
-    // Load or generate nickname
-    nickname = localStorage.getItem('nickname');
-    if (!nickname) {
-        nickname = generateRandomNickname();
-        localStorage.setItem('nickname', nickname);
-    }
-    nicknameDisplay.textContent = `Nickname: ${nickname}`;
+const PORT = 3000;
+const wss = new WebSocket.Server({ port: 8080 });
 
-    // Toggle edit mode
-    nicknameEditButton.addEventListener('click', () => {
-        nicknameDisplay.style.display = 'none';
-        nicknameEdit.style.display = 'inline-block';
-        nicknameSave.style.display = 'inline-block';
-        nicknameEditButton.style.display = 'none';
-        nicknameEdit.value = nickname;
-    });
+const wsClients = new Map(); // Stores connected WebSocket clients
+const nicklist = new Map(); // Stores nicknames per channel
 
-    // Save new nickname
-    nicknameSave.addEventListener('click', () => {
-        const newNickname = nicknameEdit.value.trim();
-        if (newNickname) {
-            nickname = newNickname;
-            localStorage.setItem('nickname', nickname);
-            nicknameDisplay.textContent = `Nickname: ${nickname}`;
-            nicknameDisplay.style.display = 'inline-block';
-            nicknameEdit.style.display = 'none';
-            nicknameSave.style.display = 'none';
-            nicknameEditButton.style.display = 'inline-block';
 
-            // Update the room list with the new nickname
-            updateRoomList();
+
+// Helper for GateKeeper Challenge-Response
+function challenge1(challenge) {
+    const c1 = Buffer.concat([
+        Buffer.from('edp{}e|wxrdse}}u666666666666666666666666666666666666666666666666'),
+        Buffer.from(challenge)
+    ]);
+
+    const a1 = crypto.createHash('md5').update(c1).digest();
+
+    const c2 = Buffer.concat([
+        Buffer.from('\x0f\x0e\x1a\x11\x17\x0f\x16\x1d\x12\x18\x0e\x19\x0f\x17\x17\x1f\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\'),
+        a1
+    ]);
+
+    const a2 = crypto.createHash('md5').update(c2).digest();
+    return a2;
+}
+// Sends topic updates to all clients in the channel
+function sendTopic(channel, topic, targetWs = null) {
+    if (targetWs) {
+        // Send topic only to the specified WebSocket client
+        if (wsClients.has(targetWs)) {
+            targetWs.send(JSON.stringify({ type: 'topic', channel, topic }));
         }
-    });
-
-    // WebSocket connection for Room List
-    const ws = new WebSocket('wss://chat.saintsrow.net/rm');
-    let allChannels = {}; // Store all channels grouped by category
-
-    ws.onopen = () => {
-        console.log('✅ Connected to WebSocket server');
-        ws.send(JSON.stringify({ type: 'requestLatest' })); // Request latest XML data
-    };
-
-    ws.onmessage = (event) => {
-        console.log("Received:", event.data);
-        const data = JSON.parse(event.data);
-        if (data.type === 'xmlUpdate') {
-            allChannels = groupChannelsByCategory(data.data); // Group channels by category
-            updateRoomList(); // Update the table with the default category
-        }
-    };
-
-    ws.onerror = (error) => console.error('❌ WebSocket Error:', error);
-
-    ws.onclose = () => {
-        console.log('❌ WebSocket connection closed. Attempting to reconnect...');
-        setTimeout(() => {
-            // Reconnect after 5 seconds
-            const newWs = new WebSocket('wss://chat.saintsrow.net/rm');
-            newWs.onopen = ws.onopen;
-            newWs.onmessage = ws.onmessage;
-            newWs.onerror = ws.onerror;
-            newWs.onclose = ws.onclose;
-            ws = newWs;
-        }, 5000);
-    };
-
-    // Group channels by category
-    function groupChannelsByCategory(data) {
-        const categories = data.Channels.Category;
-        const groupedChannels = {};
-
-        categories.forEach(category => {
-            const categoryName = category.$.Name;
-            groupedChannels[categoryName] = category.Channel || [];
-        });
-
-        return groupedChannels;
-    }
-
-    // Update the room list based on the selected category
-    function updateRoomList() {
-        const roomListBody = document.getElementById('roomListBody');
-        const paginationContainer = document.getElementById('paginationContainer'); // Pagination wrapper
-        roomListBody.innerHTML = ''; // Clear existing rows
-
-        const selectedCategory = document.getElementById('category').value;
-        let channels = allChannels[selectedCategory] || [];
-
-        // Sort channels by user count in descending order
-        channels.sort((a, b) => {
-            const userCountA = a.UserCount?.[0] ? parseInt(a.UserCount[0], 10) : 0;
-            const userCountB = b.UserCount?.[0] ? parseInt(b.UserCount[0], 10) : 0;
-            return userCountB - userCountA;
-        });
-
-        // Pagination logic
-        const channelsPerPage = 6;
-        const totalChannels = channels.length;
-        const totalPages = Math.ceil(totalChannels / channelsPerPage);
-
-        // Hide pagination if less than 6 channels
-        paginationContainer.style.display = totalChannels > channelsPerPage ? 'block' : 'none';
-
-        let currentPage = 1; // Default to page 1
-        renderPage(currentPage, channels, channelsPerPage);
-
-        createPagination(totalPages, channels, channelsPerPage);
-    }
-
-    function renderPage(page, channels, channelsPerPage) {
-        const roomListBody = document.getElementById('roomListBody');
-        roomListBody.innerHTML = ''; // Clear previous content
-
-        const startIndex = (page - 1) * channelsPerPage;
-        const endIndex = startIndex + channelsPerPage;
-        const visibleChannels = channels.slice(startIndex, endIndex);
-
-        visibleChannels.forEach(channel => {
-            const userCount = channel.UserCount?.[0] ? parseInt(channel.UserCount[0], 10) : 0;
-            let roomName = channel.$.Name || 'Unnamed Room';
-
-            // Remove %# from room names
-            roomName = roomName.replace(/^%#/, '');
-
-            // Replace \b with a space in the room name
-            roomName = roomName.replace(/\\b/g, ' ');
-
-            // Replace \b with a space in the topic
-            let topic = (channel.Topic?.[0] || 'No topic').replace(/\\b/g, ' ');
-
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${userCount}</td>
-                <td><a href="chatroom.php?rm=${encodeURIComponent(roomName)}&nickname=${encodeURIComponent(nickname)}">${roomName}</a></td>
-                <td>${topic}</td>
-                <td>${channel.$.Language?.[0] || 'Unknown'}</td>
-            `;
-            roomListBody.appendChild(row);
-            sessionStorage.setItem('hasInteracted', 'true');
+    } else {
+        // Broadcast topic to all clients in the channel (default behavior)
+        wsClients.forEach((info, ws) => {
+            if (info.channel === channel && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'topic', channel, topic }));
+            }
         });
     }
-
-    function createPagination(totalPages, channels, channelsPerPage) {
-        const paginationContainer = document.getElementById('paginationContainer');
-        paginationContainer.innerHTML = ''; // Clear previous pagination
-
-        for (let i = 1; i <= totalPages; i++) {
-            const pageButton = document.createElement('button');
-            pageButton.innerText = i;
-            pageButton.addEventListener('click', () => renderPage(i, channels, channelsPerPage));
-            paginationContainer.appendChild(pageButton);
-        }
-    }
-
-    // Add event listener to the category dropdown
-    document.getElementById('category').addEventListener('change', updateRoomList);
-
-    // Optional: Periodic refresh (if WebSocket does not push updates automatically)
-    setInterval(() => {
-        if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'requestLatest' })); // Request latest data
-        }
-    }, 30000); // Refresh every 30 seconds
 }
 
-// ==================== Chat Window Functions ====================
-function initializeChatWindow() {
-    // WebSocket connection and chat logic
-    function connectWebSocket() {
-        console.log('Attempting to connect WebSocket...');
-        const chatBox = document.querySelector('.chat-box');
-        const connectingMessage = document.createElement('p');
-        connectingMessage.textContent = 'connecting to server...';
-        connectingMessage.style.color = 'green';
-        chatBox.appendChild(connectingMessage);
+// Sends nicklist updates to all clients in the channel
+function sendNicklist(client, channel, users, userCount) {
+    wsClients.forEach((info, ws) => {
+        if (info.client === client && info.channel === channel && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'nicklist', users, userCount }));
+        }
+    });
+}
 
-        wss = new WebSocket('wss://chat.saintsrow.net/ws/');
+wss.on('connection', (ws) => {
+    console.log('🔗 WebSocket client connected');
 
-        wss.onopen = () => {
-            console.log('✅ WebSocket connection established');
-            reconnectAttempts = 0;
-            isUIReset = false;
+    let client = new IRC.Client();
+    let isConnected = false;
+    let nickname, channelName, category, topic, language, ownerkey;
 
-            const connectedMessage = document.createElement('p');
-            connectedMessage.textContent = 'Connected!';
-            connectedMessage.style.color = 'red';
-            chatBox.appendChild(connectedMessage);
+    ws.on('message', (message) => {
+        try {
+            const data = JSON.parse(message);
 
-            if (category && channelTopic && ownerkey && language && profanityFilter) {
-                const createMessage = {
-                    type: 'CREATE',
-                    nickname: nickname,
-                    category: category,
-                    channelName: channelName,
-                    language: language,
-                    profanityFilter: profanityFilter,
-                    ownerkey: ownerkey
-                };
-
-                if (channelTopic) {
-                    createMessage.channelTopic = channelTopic;
+            if (data.type === 'CREATE' || data.type === 'JOIN') {
+                nickname = data.nickname;
+                channelName = `%#${data.channelName.replace(/\s+/g, '\\b')}`;
+                if (data.type === 'CREATE') {
+                    category = data.category.replace("General", "GN").replace("Computing", "CP").replace("News", "NW").replace("Gaming", "VG").replace("Politics", "PT").replace("Conspiracies", "CT") || 'GN';
+                    channelTopic = data.channelTopic?.replace(/\s+/g, '\\b') || 'Welcome!';
+                    language = data.language || 'English';
+                    profanityFilter = data.profanityFilter || '';
+                    ownerkey = data.ownerkey || 'DEFAULT_OWNERKEY';
                 }
 
-                wss.send(JSON.stringify(createMessage));
-            } else {
-                wss.send(JSON.stringify({
-                    type: 'JOIN',
-                    nickname: nickname,
-                    channelName: channelName
-                }));
-            }
-        };
-
-        wss.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            handleWebSocketMessage(data);
-        };
-
-        wss.onclose = (event) => {
-            console.log('❌ WebSocket closed:', event.code, event.reason);
-            resetChatUI();
-
-            if (reconnectAttempts < maxReconnectAttempts) {
-                reconnectAttempts++;
-                console.log(`Reconnecting in ${reconnectDelay / 1000} seconds... (Attempt ${reconnectAttempts} of ${maxReconnectAttempts})`);
-                setTimeout(connectWebSocket, reconnectDelay);
-            } else {
-                console.error('Max reconnection attempts reached. Please refresh the page or interact with the page to retry.');
-            }
-        };
-
-        wss.onerror = (error) => {
-            console.error('⚠️ WebSocket error:', error);
-            wss.close();
-        };
-    }
-
-    function handleWebSocketMessage(data) {
-        if (data.type === 'MODE') {
-            const ArrayRaws = data.raw.split(' ');
-            const mode = ArrayRaws[1];
-            const targetNick = ArrayRaws[2];
-            const nick = data.nick;
-
-            if (ArrayRaws[0].startsWith('%#')) {
-                switch (mode) {
-                    case '+q': userRoles[targetNick] = 'owner'; break;
-                    case '+o': userRoles[targetNick] = 'host'; break;
-                    case '+v': userRoles[targetNick] = 'participant'; break;
-                    case '-v': userRoles[targetNick] = 'spectator'; break;
-                    default: console.log(`Unhandled mode: ${mode}`);
-                }
-
-                const users = Object.keys(userRoles);
-                populateNicklist(users);
-                handleModeChange(nick, targetNick, mode);
-                addModeChange(nick, targetNick, mode);
-            }
-        } else if (data.type === 'rawmsg') {
-            console.log(data.data.trim());
-        } else if (data.type === 'raw' && data.data && typeof data.data === 'string') {
-            const ArrayRaws = data.data.trim().split(' ');
-            if (ArrayRaws[1] === '001') {
-                playSound('connected-sound');
-            }
-        } else if (data.type === 'message') {
-            const messageWithEmoticons = replaceEmoticonsWithImages(data.message);
-            const messageElement = document.createElement('p');
-            messageElement.innerHTML = `<strong>${data.nick}:</strong> ${messageWithEmoticons}`;
-            document.querySelector('.chat-box').appendChild(messageElement);
-            const chatBox = document.querySelector('.chat-box');
-            chatBox.scrollTop = chatBox.scrollHeight;
-        } else if (data.type === 'NICKNAME-UPDATE') {
-            nickname = data.nickname;
-        } else if (data.type === 'TIME') {
-            const tnickname = data.tnickname;
-            const timeReply = data.data.replace(/^TIME\s+/, '');
-            const [dayShort, monthShort, dayNum, timeRaw, year] = timeReply.split(' ');
-            const dayMap = { Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday', Thu: 'Thursday', Fri: 'Friday', Sat: 'Saturday', Sun: 'Sunday' };
-            const monthMap = { Jan: 'January', Feb: 'February', Mar: 'March', Apr: 'April', May: 'May', Jun: 'June', Jul: 'July', Aug: 'August', Sep: 'September', Oct: 'October', Nov: 'November', Dec: 'December' };
-            const dayFull = dayMap[dayShort] || dayShort;
-            const monthFull = monthMap[monthShort] || monthShort;
-            const [hour, minute, second] = timeRaw.split(':').map(Number);
-            const ampm = hour >= 12 ? 'PM' : 'AM';
-            const formattedTime = `${hour % 12 || 12}:${minute.toString().padStart(2, '0')}:${second.toString().padStart(2, '0')} ${ampm}`;
-            const finalTimeString = `${dayFull}, ${monthFull} ${dayNum}, ${year} at ${formattedTime}`;
-            const systemMessage = document.createElement('p');
-            systemMessage.textContent = `‣ ${tnickname}'s local time is ${finalTimeString}`;
-            systemMessage.style.color = 'gray';
-            systemMessage.classList.add('time-reply-animate');
-            document.querySelector('.chat-box').appendChild(systemMessage);
-            const chatBox = document.querySelector('.chat-box');
-            chatBox.scrollTop = chatBox.scrollHeight;
-        } else if (data.type === 'system') {
-            if (data.event === 'join' && data.nickname !== nickname) {
-                const systemMessage = document.createElement('p');
-                systemMessage.textContent = `› ${data.nickname} has joined the channel`;
-                systemMessage.style.color = 'gray';
-                systemMessage.classList.add('glitchy-fade-in');
-                document.querySelector('.chat-box').appendChild(systemMessage);
-                const chatBox = document.querySelector('.chat-box');
-                chatBox.scrollTop = chatBox.scrollHeight;
-                playSound('join-sound');
-                userRoles[data.nickname] = 'spectator';
-            } else if (data.event === 'part' || data.event === 'quit') {
-                delete userRoles[data.nickname];
-                populateNicklist(Object.keys(userRoles));
-                const systemMessage = document.createElement('p');
-                if (data.event === 'part') {
-                    systemMessage.textContent = `‹ ${data.nickname} has left the channel`;
+                if (isConnected) {
+                    data.type === 'JOIN' ? joinChannel() : createChannel();
                 } else {
-                    systemMessage.textContent = `‹ ${data.nickname} has quit`;
-                }
-                systemMessage.style.color = 'gray';
-                document.querySelector('.chat-box').appendChild(systemMessage);
-                const chatBox = document.querySelector('.chat-box');
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }
-        } else if (data.type === 'topic') {
-            const topicElement = document.createElement('p');
-            const prefix = document.createElement('span');
-            prefix.textContent = "The chat’s topic is: ";
-            prefix.style.color = '#289e92';
-            const topicText = document.createElement('span');
-            topicText.textContent = data.topic || 'No topic provided';
-            topicText.style.color = 'black';
-            topicText.style.fontStyle = 'italic';
-            topicElement.appendChild(prefix);
-            topicElement.appendChild(topicText);
-            topicElement.style.padding = '5px';
-            topicElement.style.margin = '5px 0';
-            document.querySelector('.chat-box').appendChild(topicElement);
-        } else if (data.type === 'nicklist') {
-            Object.keys(userRoles).forEach(key => delete userRoles[key]);
-            data.users.forEach(user => {
-                if (user.startsWith(':')) {
-                    user = user.substring(1);
-                }
-                if (user.startsWith('.')) {
-                    userRoles[user] = 'owner';
-                } else if (user.startsWith('@')) {
-                    userRoles[user] = 'host';
-                } else if (user.startsWith('+')) {
-                    userRoles[user] = 'participant';
-                } else {
-                    userRoles[user] = 'spectator';
-                }
-            });
-            populateNicklist(data.users);
-            updateUserCount(data.userCount);
-        }
-    }
-
-    function resetChatUI() {
-        if (isUIReset) return;
-        const nicklistUsers = document.getElementById('nicklist-users');
-        nicklistUsers.innerHTML = '';
-        const userCountElement = document.getElementById('user-count');
-        userCountElement.textContent = '0 users online';
-        const chatBox = document.querySelector('.chat-box');
-        chatBox.innerHTML = '<p id="message1"></p><p id="message2" style="display: none;">Connected!</p>';
-        const disconnectMessage = document.createElement('p');
-        disconnectMessage.textContent = 'lost connection to server, reconnecting...';
-        disconnectMessage.style.color = 'green';
-        chatBox.appendChild(disconnectMessage);
-        isUIReset = true;
-    }
-
-    function playSound(soundId) {
-        console.log(`Attempting to play sound: ${soundId}`);
-        if (isUserInteracted) {
-            const sound = document.getElementById(soundId);
-            if (sound) {
-                console.log(`Sound element found: ${soundId}`);
-                if (isSoundPlaying) {
-                    console.log(`Sound is already playing. Adding ${soundId} to the queue.`);
-                    soundQueue.push(soundId);
-                } else {
-                    isSoundPlaying = true;
-                    sound.volume = 1.0;
-                    sound.play().catch(error => {
-                        console.error("Audio playback failed:", error);
-                        isSoundPlaying = false;
-                        playNextSound();
-                    });
-
-                    sound.addEventListener('ended', () => {
-                        console.log(`Sound ${soundId} finished playing.`);
-                        isSoundPlaying = false;
-                        playNextSound();
-                    });
-                }
-            } else {
-                console.error(`Sound element not found: ${soundId}`);
-            }
-        } else {
-            console.log("Sound not played: User has not interacted with the page yet.");
-        }
-    }
-
-    function playNextSound() {
-        if (soundQueue.length > 0) {
-            const nextSoundId = soundQueue.shift();
-            console.log(`Playing next sound in queue: ${nextSoundId}`);
-            playSound(nextSoundId);
-        }
-    }
-
-    document.addEventListener('click', () => {
-        if (!isUserInteracted) {
-            isUserInteracted = true;
-            console.log('User has interacted with the page. Sound is now enabled.');
-        }
-
-        if (reconnectAttempts >= maxReconnectAttempts) {
-            reconnectAttempts = 0;
-            console.log('User interacted with the page. Resetting reconnection attempts.');
-            connectWebSocket();
-        }
-    });
-
-    document.addEventListener('keypress', () => {
-        if (!isUserInteracted) {
-            isUserInteracted = true;
-            console.log('User has interacted with the page. Sound is now enabled.');
-        }
-
-        if (reconnectAttempts >= maxReconnectAttempts) {
-            reconnectAttempts = 0;
-            console.log('User interacted with the page. Resetting reconnection attempts.');
-            connectWebSocket();
-        }
-    });
-
-    function replaceEmoticonsWithImages(message) {
-        const emoticonMap = {
-            ":)": "111.png",
-            ":(": "112.png",
-            ":D": "113.png",
-            ":P": "114.png",
-            ":O": "115.png",
-        };
-
-        for (const [emoticon, imageFile] of Object.entries(emoticonMap)) {
-            const imagePath = `MSN/${imageFile}`;
-            const imgTag = `<img src="${imagePath}" alt="${emoticon}" style="width: 14px; height: 14px;">`;
-            message = message.replace(new RegExp(escapeRegExp(emoticon), 'g'), imgTag);
-        }
-        return message;
-    }
-
-    function escapeRegExp(string) {
-        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }
-
-    function generateRandomNickname() {
-        const adjectives = ['Cool', 'Funny', 'Smart', 'Brave', 'Quick', 'Witty', 'Happy', 'Lucky', 'Gentle', 'Wild'];
-        const nouns = ['Cat', 'Dog', 'Fox', 'Bear', 'Wolf', 'Lion', 'Tiger', 'Eagle', 'Hawk', 'Owl'];
-        const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
-        const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
-        return `${randomAdjective}${randomNoun}${Math.floor(Math.random() * 100)}`;
-    }
-
-    if (!nickname) {
-        nickname = generateRandomNickname();
-    }
-
-    function partChannel() {
-        if (wss && wss.readyState === WebSocket.OPEN) {
-            wss.send(JSON.stringify({
-                type: 'PART',
-                channel: channelName
-            }));
-        }
-    }
-
-    window.addEventListener('beforeunload', (event) => {
-        console.log('User is leaving the page. Parting channel...');
-        partChannel();
-    });
-
-    window.addEventListener('pagehide', (event) => {
-        console.log('User is leaving the page. Parting channel...');
-        partChannel();
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const nicklistUsers = document.getElementById('nicklist-users');
-        let isDragging = false;
-        let startIndex = -1;
-        let endIndex = -1;
-
-        nicklistUsers.addEventListener('mousedown', (e) => {
-            if (e.target.tagName === 'LI') {
-                if (!e.ctrlKey) {
-                    clearSelection();
+                    connectToServer(data.type);
                 }
 
-                isDragging = true;
-                startIndex = Array.from(nicklistUsers.children).indexOf(e.target);
-                endIndex = startIndex;
-                toggleSelection(e.target);
-                e.preventDefault();
+                // Update wsClients with the new client info
+                wsClients.set(ws, { nickname, channel: channelName, client });
+            } else if (data.type === 'MESSAGE') {
+                // Forward the message to the IRC channel
+                const clientInfo = wsClients.get(ws);
+                if (clientInfo && clientInfo.channel) {
+                    clientInfo.client.say(clientInfo.channel, data.content);
+                }
+            } 
+            else if (data.type === 'HOST_KEYWORD') {
+                client.raw("mode " + nickname + " +h " + data.content);
+
             }
-        });
+            else if (data.type === 'CMDRAW') {
+                // Handle raw IRC commands
+               // console.log("received cmd");
+                const commands = data.command.split(' | '); // Split commands by ' | '
+                let cmdcount = 0;
+                let cmdmode;
+                commands.forEach(command => {
+                   // console.log(command);
+                    if (cmdcount > 1) {
 
-        nicklistUsers.addEventListener('mousemove', (e) => {
-            if (isDragging && e.target.tagName === 'LI') {
-                endIndex = Array.from(nicklistUsers.children).indexOf(e.target);
-                updateSelection();
-                e.preventDefault();
-            }
-        });
+                        if (command.startsWith('//')) {
+                            let channelNameX;
+                            cmdmode = 2;
+                            // Double slash means replace # with channelName
+                            if (channelName.startsWith("%#")) {
+                                channelNameX = `%#${channelName.replace(/\s+/g, '\\b')}`;
+                            }
+                            else {
 
-        document.addEventListener('mouseup', () => {
-            isDragging = false;
-        });
-
-        nicklistUsers.addEventListener('click', (e) => {
-            if (e.ctrlKey && e.target.tagName === 'LI') {
-                toggleSelection(e.target);
-                e.preventDefault();
-            }
-        });
-
-        function toggleSelection(element) {
-            if (element.tagName === 'LI') {
-                element.classList.toggle('selected');
-            }
-        }
-
-        function clearSelection() {
-            const selectedUsers = nicklistUsers.querySelectorAll('.selected');
-            selectedUsers.forEach(user => user.classList.remove('selected'));
-        }
-
-        function updateSelection() {
-            const items = Array.from(nicklistUsers.children);
-            const [min, max] = [Math.min(startIndex, endIndex), Math.max(startIndex, endIndex)];
-            for (let i = min; i <= max; i++) {
-                items[i].classList.add('selected');
-            }
-        }
-
-        const nicklist = document.getElementById('nicklist');
-        nicklist.addEventListener('click', (e) => {
-            if (!nicklistUsers.contains(e.target)) {
-                clearSelection();
-            }
-        });
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const nicklist = document.getElementById('nicklist');
-        const nicklistUsers = document.getElementById('nicklist-users');
-
-        nicklist.addEventListener('click', (e) => {
-            if (!nicklistUsers.contains(e.target)) {
-                clearSelection();
-            }
-        });
-
-        nicklist.addEventListener('touchend', (e) => {
-            if (!nicklistUsers.contains(e.target)) {
-                clearSelection();
-            }
-        });
-
-        function clearSelection() {
-            const selectedUsers = nicklistUsers.querySelectorAll('.selected');
-            selectedUsers.forEach(user => user.classList.remove('selected'));
-        }
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const nicklistUsers = document.getElementById('nicklist-users');
-        const contextMenu = document.getElementById('contextMenu');
-
-        let touchTimer;
-        let touchTarget;
-        let touchStartX;
-        let touchStartY;
-
-        nicklistUsers.addEventListener('contextmenu', handleContextMenu);
-        nicklistUsers.addEventListener('touchstart', handleTouchStart);
-        nicklistUsers.addEventListener('touchmove', handleTouchMove);
-        nicklistUsers.addEventListener('touchend', handleTouchEnd);
-
-        function handleContextMenu(e) {
-            if (e.target.tagName === 'LI') {
-                e.preventDefault();
-                showContextMenu(e);
-            }
-        }
-
-        function handleTouchStart(e) {
-            if (e.touches.length === 1) {
-                touchTarget = e.target;
-                touchStartX = e.touches[0].clientX;
-                touchStartY = e.touches[0].clientY;
-                touchTimer = setTimeout(() => {
-                    if (touchTarget.tagName === 'LI') {
-                        showContextMenu(e.touches[0]);
+                                channelNameX = `%#${channelName.replace(/\s+/g, '\\b')}`;
+                            
+                            }
+                            const rawCommand = command.slice(2).replace(/#/g, `${channelNameX}`);
+                            client.raw(rawCommand);
+                        } else if (command.startsWith('/')) {
+                            cmdmode = 1;
+                            // Single slash means keep # as #
+                            const rawCommand = command.slice(1); // Remove the single slash
+                            client.raw(rawCommand);
+                        } else {
+                            // If it doesn't start with a slash, treat it as a normal message
+                            const clientInfo = wsClients.get(ws);
+                            if (clientInfo && clientInfo.channel) {
+                                clientInfo.client.say(clientInfo.channel, command);
+                            }
+                        }
                     }
-                }, 500);
-            }
-        }
-
-        function handleTouchMove(e) {
-            if (e.touches.length === 1) {
-                const touch = e.touches[0];
-                const deltaX = Math.abs(touch.clientX - touchStartX);
-                const deltaY = Math.abs(touch.clientY - touchStartY);
-                if (deltaX > 10 || deltaY > 10) {
-                    clearTimeout(touchTimer);
-                }
-            }
-        }
-
-        function handleTouchEnd(e) {
-            clearTimeout(touchTimer);
-        }
-
-        function showContextMenu(event) {
-            const offsetX = 20;
-            const menuWidth = contextMenu.offsetWidth;
-            const menuHeight = contextMenu.offsetHeight;
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
-
-            let left = (event.pageX || event.touches[0].pageX);
-            let top = (event.pageY || event.touches[0].pageY);
-
-            if (left + menuWidth > viewportWidth) {
-                left = viewportWidth - menuWidth - offsetX;
-            }
-
-            if (top + menuHeight > viewportHeight) {
-                top = viewportHeight - menuHeight;
-            }
-
-            contextMenu.style.display = 'block';
-            contextMenu.style.left = `${left}px`;
-            contextMenu.style.top = `${top}px`;
-
-            const selectedUsers = Array.from(nicklistUsers.querySelectorAll('.selected'));
-            if (!selectedUsers.includes(event.target)) {
-                selectedUsers.forEach(user => user.classList.remove('selected'));
-                event.target.classList.add('selected');
-            }
-        }
-
-        document.addEventListener('click', hideContextMenu);
-        document.addEventListener('touchend', hideContextMenu);
-
-        function hideContextMenu(e) {
-            if (!contextMenu.contains(e.target)) {
-                contextMenu.style.display = 'none';
-            }
-        }
-
-        contextMenu.querySelectorAll('li[data-action]').forEach(item => {
-            item.addEventListener('click', handleMenuAction);
-            item.addEventListener('touchend', handleMenuAction);
-        });
-
-        function handleMenuAction(e) {
-            const action = e.target.getAttribute('data-action');
-            const selectedUsers = Array.from(nicklistUsers.querySelectorAll('.selected')).map(user => user.textContent);
-
-            if (selectedUsers.length === 0) {
-                console.error('No users selected');
-                return;
-            }
-
-            let commandPrefix;
-            let commandSuffix = '';
-            switch (action) {
-                case 'viewProfile':
-                    console.log('View Profile:', selectedUsers);
-                    return;
-                case 'whisper':
-                    const whisperMessage = prompt(`Whisper to ${selectedUsers.join(', ')}:`, '');
-                    if (whisperMessage) {
-                        commandPrefix = '//privmsg ';
-                        commandSuffix = ` :${whisperMessage}`;
+                    else {
+                        if (command.startsWith('//')) {
+                            let channelNameX;
+                            if (channelName.startsWith("%#")) {
+                                // If channelName already starts with %#, don't add another %#
+                                channelNameX = `${channelName.replace(/\s+/g, '\\b')}`;
+                            } else {
+                                // Otherwise, add %# prefix
+                                channelNameX = `%#${channelName.replace(/\s+/g, '\\b')}`;
+                            }
+                            const rawCommand = command.slice(2).replace(/#/g, `${channelNameX}`);
+                            client.raw(rawCommand);
+                        }
+                         else if (command.startsWith('/')) {
+                        // Single slash means keep # as #
+                        const rawCommand = command.slice(1); // Remove the single slash
+                        client.raw(rawCommand);
                     } else {
-                        return;
-                    }
-                    break;
-                case 'ignore':
-                    console.log('Ignore:', selectedUsers);
-                    return;
-                case 'tagUser':
-                    console.log('Tag User:', selectedUsers);
-                    return;
-                case 'localTime':
-                    commandPrefix = '//privmsg ';
-                    commandSuffix = ' :\x01TIME\x01';
-                    break;
-                case 'disruptiveBehavior':
-                    commandPrefix = '//kick # ';
-                    commandSuffix = ' :Disruptive Behavior';
-                    break;
-                case 'profanity':
-                    commandPrefix = '//kick # ';
-                    commandSuffix = ' :Profanity';
-                    break;
-                case 'scrolling':
-                    commandPrefix = '//kick # ';
-                    commandSuffix = ' :Scrolling';
-                    break;
-                case 'customKickBan':
-                    const customReason = prompt(`Enter kick reason for ${selectedUsers.join(', ')}:`, '');
-                    if (customReason) {
-                        commandPrefix = '//kick # ';
-                        commandSuffix = ` :${customReason}`;
-                    } else {
-                        return;
-                    }
-                    break;
-                case 'host':
-                    commandPrefix = '//mode # +o ';
-                    break;
-                case 'participant':
-                    commandPrefix = '//mode # +v ';
-                    break;
-                case 'spectator':
-                    commandPrefix = '//mode # -v ';
-                    break;
-                default:
-                    console.log('Unknown action:', action);
-                    return;
-            }
+                        if (cmdmode == 1) {
+                            const rawCommand = command; // Remove the single slash
+                            client.raw(rawCommand);
 
-            if (wss && wss.readyState === WebSocket.OPEN) {
-                selectedUsers.forEach(user => {
-                    const command = `${commandPrefix}${user}${commandSuffix}`;
-                    wss.send(JSON.stringify({
-                        type: 'CMDRAW',
-                        command: command
-                    }));
+                        }
+                        else {
+                            let channelNameX;
+                            if (channelName.startsWith("%#")) {
+                                channelNameX = `%#${channelName.replace(/\s+/g, '\\b')}`;
+                            }
+                            else {
+
+                            channelNameX = `%#${channelName.replace(/\s+/g, '\\b')}`;
+                            
+                            }
+                            const rawCommand = command.slice(2).replace(/#/g, `${channelNameX}`);
+                            client.raw(rawCommand);
+
+                        }
+   
+                    }
+                }
+                    cmdcount = cmdcount + 1;
+                });
+            } 
+            else if (data.type === 'CTCP_TIME') {
+                const targetNickname = data.target; // Who you want to CTCP
+                console.log(`⏰ CTCP TIME requested for ${targetNickname}`);
+            
+                // Store the WebSocket client waiting for this response
+                ctcpRequests.set(targetNickname, ws);
+            
+                // Send the CTCP TIME query
+                client.say(targetNickname, '\x01TIME\x01');
+            
+                // Optional: Timeout to cleanup if no reply
+                setTimeout(() => {
+                    if (ctcpRequests.has(targetNickname)) {
+                        console.warn(`⏰ No CTCP TIME reply from ${targetNickname}, cleaning up.`);
+                        ctcpRequests.delete(targetNickname);
+                    }
+                }, 30000); // 30 seconds timeout
+            }
+            
+            else if (data.type === 'PART') {
+                // Handle PART command
+                const clientInfo = wsClients.get(ws);
+                if (clientInfo && clientInfo.channel) {
+                    console.log(`🚪 ${clientInfo.nickname} is parting ${clientInfo.channel}`);
+                    clientInfo.client.part(clientInfo.channel); // Part the channel
+                }
+            } else {
+                console.error('⚠️ Unknown message type:', data.type);
+            }
+            
+        } catch (error) {
+            console.error('🛑 Error processing WebSocket message:', error);
+        }
+    });
+
+    ws.on('close', () => {
+        console.log('❌ WebSocket client disconnected');
+        const clientInfo = wsClients.get(ws);
+        if (clientInfo) {
+            console.log(`🚪 ${clientInfo.nickname} is parting ${clientInfo.channel}`);
+
+            // Send PART command to the IRC server
+            clientInfo.client.part(clientInfo.channel);
+
+            // Introduce a small delay before quitting the IRC client
+            setTimeout(() => {
+                console.log(`🔌 Quitting IRC for ${clientInfo.nickname}`);
+                clientInfo.client.quit('WebSocket connection lost');
+            }, 1000); // 1-second delay to ensure PART is processed
+        }
+        wsClients.delete(ws);
+    });
+
+    ws.on('error', (err) => {
+        console.error('⚠️ WebSocket error:', err);
+        ws.terminate();
+    });
+
+    function createChannel() {
+        if (!channelName) return console.error('❌ No channel name provided.');
+        console.log(`🆕 Creating channel: ${channelName}`);
+        client.raw(`CREATE ${category} ${channelName} +ntl 50 ${channelTopic} EN-US 1 ${ownerkey} 0`);
+    }
+
+    function joinChannel() {
+        if (!channelName) return console.error('❌ No channel name provided.');
+        console.log(`🔗 Joining channel: ${channelName}`);
+
+        client.raw(`JOIN ${channelName}`);
+
+        // Request a list of users in the channel after joining
+       // setTimeout(() => {
+        //    console.log(`📡 Requesting nicklist for ${channelName}`);
+         //   client.raw(`NAMES ${channelName}`);
+       // }, 2000); // Small delay to ensure the join is processed first
+
+        // Send the topic to the newly joined client
+        wsClients.forEach((info, ws) => {
+            if (info.channel === channelName && ws.readyState === WebSocket.OPEN && info.nickname === nickname) {
+                // sendTopic(channelName, topic, ws); // Send topic only to this client
+            }
+        });
+    }
+
+    function connectToServer(mode) {
+        console.log('🌍 Connecting to IRCX server...');
+        isConnected = false;
+
+        client.connect({
+            host: 'ircx.saintsrow.net',
+            port: 6667,
+            nick: nickname,
+            username: 'webuser',
+            gecos: 'sr1client 1.000.000',
+            autoConnect: false,  // Don't auto-connect
+            autoRegister: false,  // Prevents automatic NICK/USER/CAP
+        });
+
+        client.once('registered', () => {
+            console.log('✅ Connected to IRC server.');
+            isConnected = true;
+            mode === 'JOIN' ? joinChannel() : createChannel();
+        });
+
+        client.once('socket connected', () => {
+            console.log('✅ Socket connected to IRC.');
+           // client.raw('IRCX');
+            client.raw('IRCVERS IRC6 MSN-OCX!2.03.0204.0801');
+            client.raw('AUTH GateKeeper I :GKSSP\0\x03r\x02\0\0\0\x01\0\0\0');
+        });
+
+        client.on('raw', (event) => {
+            let parts = event.line;
+            let command = parts[1];
+            let params = parts.slice(2);
+            console.log(parts);
+            let partsx = event.line.split(' ');
+console.log('Parts:', partsx);
+            if (command === 'GateKeeper') {
+                const challenge = event.line.slice(-8);
+                console.log(challenge);
+                const answer = challenge1(challenge);
+
+                const authResponse = Buffer.concat([
+                    Buffer.from('AUTH GateKeeper S :GKSSP\0\0\0\x02\0\0\0\x03\0\0\0', 'binary'),
+                    answer,
+                    Buffer.from('\xb2\x02"\xbd\xdd\x94sO\xae6\x03j\xfb\xe7\xaal\r\n', 'binary')
+                ]);
+
+                client.raw(authResponse.toString('binary'));
+                console.log(authResponse.toString('binary'));
+            }
+            //if (command === '001') { // RPL_WELCOME
+                // console.log(`📢 Received welcome message: ${event.line}`);
+
+                // Find the WebSocket client associated with this IRC client
+                wsClients.forEach((info, ws) => {
+                    if (info.client === client && ws.readyState === WebSocket.OPEN) {
+                        // Send the raw 001 message to the client
+                        ws.send(JSON.stringify({ type: 'rawmsg', data: event.line }));
+                    }
+               });
+
+               if (command === 'NOTICE') {
+                let tnickname = parts[0].startsWith(':') ? parts[0].slice(1).split('!')[0] : parts[0];
+                let target = params[0];
+                let messageRaw = params.slice(1).join(' ').trim();
+                let messagex = messageRaw.startsWith(':') ? messageRaw.slice(1) : messageRaw;
+            
+                if (messagex.startsWith('\x01TIME') && messagex.endsWith('\x01')) {
+                    let ctcpReply = messagex.slice(1, -1); // 'TIME Mon Mar 10 00:19:43 2025'
+            
+                    // 'target' is likely our own nickname. So look up the request using 'tnickname'
+                    let wsClient = ctcpRequests.get(nickname); // who sent the TIME reply
+            
+                    wsClients.forEach((info, ws) => {
+                        if (info.client === client && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({ type: 'TIME', tnickname: tnickname, data: ctcpReply }));
+                        }
+                    });
+                        console.log(`📤 Sent CTCP TIME reply to WebSocket client for ${nickname}: ${ctcpReply}`);
+                        ctcpRequests.delete(nickname); // Clean up
+                    } else {
+                        console.warn(`⚠️ No active WebSocket client for ${nickname} or WebSocket not open!`);
+                    }
+                }
+            
+            
+        
+            if (command === 'PING') {
+                client.raw(`PONG ${params[0]}`);
+            }
+            if (command === '001') { // RPL_WELCOME
+                console.log(`📢 Received welcome message: ${event.line}`);
+
+                // Find the WebSocket client associated with this IRC client
+                wsClients.forEach((info, ws) => {
+                    if (info.client === client && ws.readyState === WebSocket.OPEN) {
+                        // Send the raw 001 message to the client
+                        ws.send(JSON.stringify({ type: 'raw', data: event.line }));
+                    }
+                });
+                wsClients.forEach((info, ws) => {
+                    if (info.client === client && ws.readyState === WebSocket.OPEN) {
+                        // Send the raw 001 message to the client
+                        ws.send(JSON.stringify({ type: 'NICKNAME-UPDATE', nickname: event.line.split(" ")[2] }));
+                    }
                 });
             }
+            if (command === '332') { // TOPIC
+                let topicText = params.slice(2).join(' ').replace(/\\b/g, ' ').slice(1);
+                let channel = params[1];
 
-            contextMenu.style.display = 'none';
-        }
-    });
-}
+                console.log(`📢 Topic for ${channel}: ${topicText}`);
 
-// ==================== Create Channel Functions ====================
-function initializeCreateChannel() {
-    // Generate a random ownerkey
-    function generateOwnerkey() {
-        const length = Math.floor(Math.random() * 4) + 6;
-        const min = Math.pow(10, length - 1);
-        const max = Math.pow(10, length) - 1;
-        return Math.floor(min + Math.random() * (max - min + 1));
-    }
+                // Send the topic only to the newly joined client
+                wsClients.forEach((info, ws) => {
+                    if (info.channel === channel && ws.readyState === WebSocket.OPEN && info.nickname === nickname) {
+                        sendTopic(channel, topicText, ws); // Send topic only to this client
+                    }
+                });
+                client.raw(`NAMES ${channelName}`);
 
-    // Set the ownerkey value when the page loads
-    document.addEventListener('DOMContentLoaded', function () {
-        const ownerkeyInput = document.getElementById('ownerkey');
-        ownerkeyInput.value = generateOwnerkey();
-    });
-
-    // Copy ownerkey to clipboard
-    const ownerkeyInput = document.getElementById('ownerkey');
-    const tooltip = document.getElementById('ownerkey-tooltip');
-
-    ownerkeyInput.addEventListener('mouseup', function () {
-        const selectedText = window.getSelection().toString();
-        if (selectedText) {
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(selectedText)
-                    .then(() => {
-                        tooltip.classList.add('show');
-                        setTimeout(() => {
-                            tooltip.classList.remove('show');
-                        }, 2000);
-                    })
-                    .catch((err) => {
-                        console.error('Failed to copy text:', err);
-                        alert('Failed to copy Ownerkey to clipboard.');
-                    });
-            } else {
-                const textarea = document.createElement('textarea');
-                textarea.value = selectedText;
-                document.body.appendChild(textarea);
-                textarea.select();
-                try {
-                    document.execCommand('copy');
-                    tooltip.classList.add('show');
-                    setTimeout(() => {
-                        tooltip.classList.remove('show');
-                    }, 2000);
-                } catch (err) {
-                    console.error('Failed to copy text (fallback):', err);
-                    alert('Failed to copy Ownerkey to clipboard.');
-                }
-                document.body.removeChild(textarea);
+                //credits to OldAnalytics for debugging some link / names issues
             }
-        }
-    });
 
-    // Generate a random nickname
-    function generateRandomNickname() {
-        const adjectives = ['Cool', 'Funny', 'Smart', 'Brave', 'Quick', 'Witty', 'Happy', 'Lucky', 'Gentle', 'Wild'];
-        const nouns = ['Cat', 'Dog', 'Fox', 'Bear', 'Wolf', 'Lion', 'Tiger', 'Eagle', 'Hawk', 'Owl'];
-        const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
-        const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
-        return `${randomAdjective}${randomNoun}${Math.floor(Math.random() * 100)}`;
+            if (command === '353') { // NAMES list
+                let channelIndex = params.findIndex(p => p.startsWith('%') || p.startsWith('#'));
+                if (channelIndex === -1) return;
+
+                let users = params.slice(channelIndex + 1);
+                if (users[0].startsWith(':')) users[0] = users[0].slice(1);
+
+                let channel = params[channelIndex];
+                nicklist.set(channel, users);
+                console.log(`👥 Updated user list for ${channel}:`, users);
+                let userCount =  users.length;
+
+                wsClients.forEach((info, ws) => {
+                    if (info.channel === channel && ws.readyState === WebSocket.OPEN && info.nickname === nickname) {
+                        ws.send(JSON.stringify({ type: 'nicklist', users, userCount }));
+                        ws.send(JSON.stringify({ type: 'nicklist-count', users, userCount }));
+                    }
+                
+                });
+            }
+                //sendNicklist(channel, users, users.length); // Broadcast nicklist to all clients in the channel
+            if (command === 'MODE') {
+                wsClients.forEach((info, ws) => {
+                    if (ws.readyState === WebSocket.OPEN && info.nickname === nickname) {
+                        let nick = parts[0].split('!')[0].slice(1); // Extract nickname
+                        ws.send(JSON.stringify({ type: 'MODE', nick: nick,raw: params.join(' ') })); // make it a space-separated string
+
+                    }
+                
+                });
+
+            }
+
+            if (command === 'PART') {
+                let nick = parts[0].split('!')[0].slice(1); // Extract nickname
+                let channel = params[0]; // Channel name
+
+                console.log(`🚪 ${nick} left ${channel}`);
+
+                if (nicklist.has(channel)) {
+                    let users = nicklist.get(channel).filter(user => user !== nick); // Remove the user from the nicklist
+                    let userCount = users.length;
+                 nicklist.set(channel, users);
+
+                    wsClients.forEach((info, ws) => {
+                        if (ws.readyState === WebSocket.OPEN && info.nickname === nickname) {
+                            ws.send(JSON.stringify({ type: 'nicklist-count', users, userCount }));
+                        }
+                    
+                    });
+                }
+            }
+
+            // if (command === 'QUIT') {
+            //     let nick = parts[0].split('!')[0].slice(1); // Extract nickname
+
+            //     console.log(`🚪 ${nick} quit IRC`);
+
+            //     // Remove the user from all channels they were in
+            //     nicklist.forEach((users, channel) => {
+            //         if (users.includes(nick)) {
+            //             let users = nicklist.get(channel).filter(user => user !== nick); // Remove the user from the nicklist
+            //             let userCount = users.length;
+            //              nicklist.set(channel, users);
+            //            // let updatedUsersCount = updatedUsers.length;
+            //          wsClients.forEach((info, ws) => {
+            //                 if (ws.readyState === WebSocket.OPEN && info.nickname === nickname) {
+            //                     ws.send(JSON.stringify({ type: 'nicklist-count', users, userCount }));
+            //                 }
+                        
+            //             });
+            //             // Send the QUIT message only to the relevant WebSocket client
+            //             wsClients.forEach((info, ws) => {
+            //                 if (info.client === client && ws.readyState === WebSocket.OPEN) {
+            //                     ws.send(JSON.stringify({
+            //                         type: 'system',
+            //                         message: `${nick} has quit out`,
+            //                         nickname: nick,
+            //                         event: 'quit'
+            //                     }));
+            //                 }
+            //             });
+            //         }
+            //     });
+            // }
+        });
+
+
+        client.on('mode', (event) => {
+            let parts = event.mode;
+           //  let command = parts[1];
+           // let params = parts.slice(2);
+            console.log(event.mode);
+        });         
+        client.on('join', (event) => {
+            console.log(`📢 ${event.nick} joined ${event.channel}`);
+
+            if (!nicklist.has(event.channel)) {
+                nicklist.set(event.channel, []);
+            }
+
+            // Add the new user if not already in the list
+            if (!nicklist.get(event.channel).includes(event.nick)) {
+                nicklist.get(event.channel).push(event.nick);
+            }
+
+            // Broadcast updated nicklist to all clients in the channel
+            // sendNicklist(event.channel, nicklist.get(event.channel), nicklist.get(event.channel).length);
+            let users = nicklist.get(event.channel);
+            let userCount = nicklist.get(event.channel).length;
+            wsClients.forEach((info, ws) => {
+                if (ws.readyState === WebSocket.OPEN && info.nickname === nickname) {
+                   ws.send(JSON.stringify({ type: 'nicklist-count', users, userCount }));
+                }
+            
+            });
+            // Send the JOIN message only to the relevant WebSocket client
+            wsClients.forEach((info, ws) => {
+                if (info.client === client && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: 'system',
+                        message: `${event.nick} has joined the channel`,
+                        nickname: event.nick,
+                     event: 'join'
+                    }));
+                }
+            });
+        });
+
+        client.on('kick', (event) => {
+        
+            ///    console.dir(event, { depth: null, colors: true }); // Log the event object for debugging
+      /*       kicked: '₪ḠḺḮṪḈḤ₪',
+            nick: 'num',
+            ident: '806cd9595404',
+            hostname: 'ANON',
+            channel: '%#The\\bLobby',
+            message: '',
+            time: undefined,
+            tags: {},
+            batch: undefined */
+          
+
+            if (nicklist.has(event.channel)) {
+                let users = nicklist.get(event.channel).filter(user => user !== event.kicked); // Remove the user from the nicklist
+                let userCount = nicklist.get(event.channel).length;
+                wsClients.forEach((info, ws) => {
+                    if (ws.readyState === WebSocket.OPEN && info.nickname === nickname) {
+                       ws.send(JSON.stringify({ type: 'nicklist-count', users, userCount }));
+                    }
+                
+                });
+                nicklist.set(event.channel, users);
+                let msg = "";
+                // Broadcast updated nicklist to all clients in the channel
+               // sendNicklist(event.channel, users, users.length);
+
+                if (event.message != "") {
+                msg = `Host ${event.nick} has kicked ${event.kicked} out of the Channel (${event.message})`;
+                }
+                else {
+                msg = `Host ${event.nick} has kicked ${event.kicked} out of the Channel`;           
+                }       
+                // Send the PART message only to the relevant WebSocket client
+                wsClients.forEach((info, ws) => {
+                    if (info.client === client && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({
+                            type: 'system',
+                            message: msg,
+                            nickname: event.nick,
+                            knickname: event.kicked,
+                            reason: event.message,
+                            event: 'kick'
+                        }))
+                    }
+                })
+                }
+        });
+        client.on('part', (event) => {
+            console.log(`🚪 ${event.nick} left ${event.channel}`);
+
+            if (nicklist.has(event.channel)) {
+                let users = nicklist.get(event.channel).filter(user => user !== event.nick); // Remove the user from the nicklist
+                let userCount = nicklist.get(event.channel).length;
+                nicklist.set(event.channel, users);
+                wsClients.forEach((info, ws) => {
+                    if (ws.readyState === WebSocket.OPEN && info.nickname === nickname) {
+                       ws.send(JSON.stringify({ type: 'nicklist-count', users, userCount }));
+                    }
+                
+                });
+                // Broadcast updated nicklist to all clients in the channel
+              //  sendNicklist(event.channel, users, users.length);
+
+                // Send the PART message only to the relevant WebSocket client
+                wsClients.forEach((info, ws) => {
+                    if (info.client === client && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({
+                            type: 'system',
+                            message: `${event.nick} has left the channel`,
+                            nickname: event.nick,
+                            event: 'part'
+                        }));
+                    }
+                });
+            }
+        });
+
+        client.on('quit', (event) => {
+            console.log(event);
+            // Remove the user from all channels they were in
+            nicklist.forEach((users, channel) => {
+                if (users.includes(event.nick)) {
+                    let filteredUsers = users.filter(user => user !== event.nick); // Use a different variable name
+                    let userCount = filteredUsers.length;
+                    nicklist.set(channel, filteredUsers);
+        
+                    // Send the updated nicklist and user count to all relevant WebSocket clients
+                    wsClients.forEach((info, ws) => {
+                        if (ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify({ type: 'nicklist-count', users: filteredUsers, userCount }));
+                        }
+                    });
+                }
+                wsClients.forEach((info, ws) => {
+                    if (info.client === client && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({
+                            type: 'system',
+                            message: `${event.nick} has quit out${event.message ? ` (${event.message})` : ''}`,
+                            nickname: event.nick,
+                            reason: event.message,
+                            event: 'quit'
+                        }));
+                    }
+                });
+            });
+        });
+            // Send the QUIT message only to the relevant WebSocket client
+
+
+        client.on('message', (event) => {
+            wsClients.forEach((info, ws) => {
+                // Check if the WebSocket client is associated with this IRC client
+                if (info.client === client && ws.readyState === WebSocket.OPEN) {
+                    // Send the message only to the WebSocket client that started this IRC connection
+                    ws.send(JSON.stringify({ type: 'message', nick: event.nick, message: event.message }));
+                }
+            });
+        });
+
+        client.on('close', () => console.log('🔌 IRC connection closed.'));
+        client.on('error', (err) => console.error('🛑 IRC error:', err));
     }
-
-    // Set the nickname value when the page loads
-    document.addEventListener('DOMContentLoaded', function () {
-        const nicknameInput = document.getElementById('nickname');
-        nicknameInput.value = generateRandomNickname();
-    });
-
-    // Handle form submission
-    document.getElementById('channel-form').addEventListener('submit', function (event) {
-        sessionStorage.setItem('hasInteracted', 'true');
-    });
-}
-
-// ==================== Initialize All Sections ====================
-document.addEventListener('DOMContentLoaded', function () {
-    initializeRoomList();
-    initializeChatWindow();
-    initializeCreateChannel();
 });
+
+http.createServer((req, res) => {
+    if (req.method === 'GET' && req.url === '/status') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'success', message: 'IRCX daemon running' }));
+    } else {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'error', message: 'Not Found' }));
+    }
+}).listen(PORT, () => console.log(`✅ IRCX daemon running on http://localhost:${PORT}`));

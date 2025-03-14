@@ -1,8 +1,11 @@
 const userRoles = {}; // Global object to track user roles
+let previousRoles = {}; // Stores the previous role of each user
 const modeQueue = []; // Queue to hold mode change messages
 let isProcessing = false; // Flag to track if a message is being processed
 let currentMessageElement = null; // Track the current message element
+const isParticipant = {
 
+};
 function processQueue() {
     if (modeQueue.length === 0) {
         isProcessing = false;
@@ -51,35 +54,89 @@ function addModeChange(nick, targetNick, mode) {
     }
 }
 
+const MODE_ACTIONS = {
+    '+q': (targetNick) => {
+        previousRoles[targetNick] = userRoles[targetNick] || 'member';
+        userRoles[targetNick] = 'owner';
+        isParticipant[targetNick] = false;
+    },
+    '+o': (targetNick) => {
+        previousRoles[targetNick] = userRoles[targetNick] || 'member';
+        userRoles[targetNick] = 'host';
+        isParticipant[targetNick] = false;
+    },
+    '+v': (targetNick) => {
+        userRoles[targetNick] = 'member';
+        isParticipant[targetNick] = true;
+    },
+    '-v': (targetNick) => {
+        userRoles[targetNick] = 'member';
+        isParticipant[targetNick] = false;
+    },
+    '-o': (targetNick) => {
+        userRoles[targetNick] = previousRoles[targetNick] || 'member';
+        isParticipant[targetNick] = userRoles[targetNick] === 'participant';
+        delete previousRoles[targetNick];
+    },
+    '-q': (targetNick) => {
+        userRoles[targetNick] = previousRoles[targetNick] || 'member';
+        isParticipant[targetNick] = userRoles[targetNick] === 'participant';
+        delete previousRoles[targetNick];
+    }
+};
+
 function handleModeChange(nick, targetNick, mode) {
     switch (mode) {
         case '+q': // Owner
+            // Store the current role before promoting to owner
+            previousRoles[targetNick] = userRoles[targetNick] || 'member';
             userRoles[targetNick] = 'owner';
+            isParticipant[targetNick] = false; // Owner is not a participant
             break;
         case '+o': // Host
+            // Store the current role before promoting to host
+            previousRoles[targetNick] = userRoles[targetNick] || 'member';
             userRoles[targetNick] = 'host';
+            isParticipant[targetNick] = false; // Host is not a participant
             break;
         case '+v': // Participant
-            userRoles[targetNick] = 'participant';
+            // Only update role if the user is not already an owner or host
+            if (userRoles[targetNick] !== 'owner' && userRoles[targetNick] !== 'host') {
+                userRoles[targetNick] = 'participant';
+                isParticipant[targetNick] = true; // User is a participant
+            }
             break;
         case '-v': // Spectator
-            userRoles[targetNick] = 'spectator';
+            // Only update role if the user is not already an owner or host
+            if (userRoles[targetNick] !== 'owner' && userRoles[targetNick] !== 'host') {
+                userRoles[targetNick] = 'member';
+            }
+            isParticipant[targetNick] = false; // User is not a participant
             break;
         case '-o': // Remove host
-            userRoles[targetNick] = 'participant';
+            // Revert to the previous role if available, otherwise set to member
+            userRoles[targetNick] = previousRoles[targetNick] || 'member';
+            isParticipant[targetNick] = (userRoles[targetNick] === 'participant'); // Restore participant status
+            delete previousRoles[targetNick]; // Clear the stored previous role
             break;
         case '-q': // Remove owner
-            userRoles[targetNick] = 'participant';
+            // Revert to the previous role if available, otherwise set to member
+            userRoles[targetNick] = 'member';
+            isParticipant[targetNick] = (userRoles[targetNick] === 'participant'); // Restore participant status
+            delete previousRoles[targetNick]; // Clear the stored previous role
             break;
         default:
             console.log(`Unhandled mode: ${mode}`);
     }
 
-    // Apply the fade-out and fade-in effect to the user whose role changed
-    applyTransporterEffect(targetNick);
-
-    // Do NOT call populateNicklist here! It will be called inside applyTransporterEffect.
+    // Refresh the nicklist with updated roles
+    populateNicklist(Object.keys(userRoles));
+    console.log(`Mode change: ${mode} for ${targetNick}. Updated userRoles:`, userRoles);
+    console.log(`Updated isParticipant:`, isParticipant);
+    console.log(`Updated previousRoles:`, previousRoles);
 }
+
+
 function populateNicklist(users) {
     const nicklistUsers = document.getElementById('nicklist-users');
     nicklistUsers.innerHTML = ''; // Clear existing list
@@ -89,13 +146,14 @@ function populateNicklist(users) {
         owner: [], // Owners (mode +q)
         host: [],  // Hosts (mode +o)
         participant: [], // Participants (mode +v)
-        spectator: [] // Spectators (mode -v or no mode)
+        member: [], // Members (no mode)
+        spectator: [], // Spectators (mode -v or no mode)
     };
 
-    // Iterate through the users and categorize them based on their prefixes
+    // Iterate through the users and categorize them based on prefixes or userRoles
     users.forEach(user => {
         let displayName = user; // Default to the original name
-        let role = 'spectator'; // Default role
+        let role = 'member'; // Default role
 
         // Check for prefixes and assign roles accordingly
         if (user.startsWith('.')) {
@@ -109,26 +167,27 @@ function populateNicklist(users) {
             displayName = user.substring(1); // Remove the '+' prefix
         } else {
             // If no prefix, use the role from userRoles (if available)
-            role = userRoles[user] || 'spectator';
+            role = userRoles[user] || 'member';
         }
 
         // Ensure the nickname is unique within its role group
         if (!groups[role].includes(displayName)) {
             groups[role].push(displayName);
         }
+
+        // Update the userRoles object
+        userRoles[displayName] = role;
     });
 
     // Sort each group alphabetically
-    groups.owner.sort((a, b) => a.localeCompare(b));
-    groups.host.sort((a, b) => a.localeCompare(b));
-    groups.participant.sort((a, b) => a.localeCompare(b));
-    groups.spectator.sort((a, b) => a.localeCompare(b));
+    Object.values(groups).forEach(group => group.sort((a, b) => a.localeCompare(b)));
 
     // Combine the groups in the specified order
     const sortedUsers = [
         ...groups.owner,
         ...groups.host,
         ...groups.participant,
+        ...groups.member,
         ...groups.spectator
     ];
 
@@ -144,6 +203,8 @@ function populateNicklist(users) {
             li.classList.add('host');
         } else if (groups.participant.includes(user)) {
             li.classList.add('participant');
+        } else if (groups.member.includes(user)) {
+            li.classList.add('member');
         } else if (groups.spectator.includes(user)) {
             li.classList.add('spectator');
         }
@@ -151,10 +212,10 @@ function populateNicklist(users) {
         nicklistUsers.appendChild(li);
     });
 
-    console.log('Nicklist updated with roles:', groups); // Debugging
+    // Debugging: Log the state of userRoles and groups
+    console.log('Nicklist updated with roles:', groups);
+    console.log('Current userRoles:', userRoles);
 }
-
-
 
 function updateUserCount(count) {
 const userCountElement = document.getElementById('user-count');
@@ -416,17 +477,39 @@ function connectWebSocket() {
             let MChannel = ArrayRaws[0];
             switch (mode) {
                 case '+q': // Owner
-                    userRoles[targetNick] = 'owner';
-                    break;
-                case '+o': // Host
-                    userRoles[targetNick] = 'host';
-                    break;
-                case '+v': // Participant
-                    userRoles[targetNick] = 'participant';
-                    break;
-                case '-v': // Spectator
-                    userRoles[targetNick] = 'spectator';
-                    break;
+                // Store the current role before promoting to owner
+            //    previousRoles[targetNick] = userRoles[targetNick] || 'spectator';
+                userRoles[targetNick] = 'owner';
+                break;
+            case '+o': // Host
+                // Store the current role before promoting to host
+    //    previousRoles[targetNick] = userRoles[targetNick] || 'spectator';
+                userRoles[targetNick] = 'host';
+                break;
+            case '+v': // Participant
+                isParticipant[targetNick] = true;
+                if (userRoles[targetNick] !== 'owner' && userRoles[targetNick] !== 'host') {
+                 //   userRoles[targetNick] = 'participant';
+                }
+                break;
+            case '-v': // Spectator
+            isParticipant[targetNick] = false;
+                if (userRoles[targetNick] !== 'owner' && userRoles[targetNick] !== 'host') {
+                  //  userRoles[targetNick] = 'spectator';
+                }
+                break;
+            case '-o': // Remove host
+                // Revert to the previous role if available, otherwise set to spectator
+                userRoles[targetNick] = 'member';
+                // Clear the previous role after demotion
+              //  delete previousRoles[targetNick];
+                break;
+            case '-q': // Remove owner
+                // Revert to the previous role if available, otherwise set to spectator
+                userRoles[targetNick] = 'member';
+                // Clear the previous role after demotion
+              //  delete previousRoles[targetNick];
+                break;
                 default:
                     console.log(`Unhandled mode: ${mode}`);
                     break;
@@ -538,62 +621,97 @@ function connectWebSocket() {
     
     else if (data.type === 'system') {
     // Handle system messages (JOIN, PART, QUIT)
-    if (data.event === 'join' && data.nickname !== nickname) {
-        // Only display the join message if the user is not yourself
-        const systemMessage = document.createElement('p');
-        systemMessage.textContent = `› ${data.nickname} has joined the channel`;
-        systemMessage.style.color = 'gray'; // Set the text color to gray
-        systemMessage.classList.add('glitchy-fade-in'); // Add the glitchy fade-in effect
-        document.querySelector('.chat-box').appendChild(systemMessage);
+// Handle join event
+if (data.event === 'join' || data.event === 'part' || data.event === 'quit' || data.event === 'kick') {
+  //  updateUserCount(data.userCount); // Update the user count
+}
+if (data.event === 'join' && data.nickname !== nickname) {
+    userRoles[data.nickname] = 'member'; // Default role for new users
+    isParticipant[data.nickname] = false; // Default to false for new users
+    populateNicklist(Object.keys(userRoles)); // Refresh the nicklist
+    //updateUserCount(data.userCount);
 
-        // Scroll to the bottom of the chat box
-        const chatBox = document.querySelector('.chat-box');
-        chatBox.scrollTop = chatBox.scrollHeight;
+    const systemMessage = document.createElement('p');
+    systemMessage.textContent = `› ${data.nickname} has joined the channel`;
+    systemMessage.style.color = 'gray';
+    systemMessage.classList.add('glitchy-fade-in');
+    document.querySelector('.chat-box').appendChild(systemMessage);
 
-        // Play the join sound if the user has interacted
-        playSound('join-sound');
-        // Add the new user with a default role of 'spectator'
-        userRoles[data.nickname] = 'spectator';
-    } else if (data.event === 'part' || data.event === 'quit') {
-        delete userRoles[data.nickname];
-        populateNicklist(Object.keys(userRoles)); // Refresh the nicklist
-        // Display PART or QUIT messages for all users
-        const systemMessage = document.createElement('p');
-        if (data.event === 'part') {
-            systemMessage.textContent = `‹ ${data.nickname} has left the channel`;
-        } else {
-            systemMessage.textContent = `‹ ${data.nickname} has quit`;
-        }
-        systemMessage.style.color = 'gray'; // Set the text color to gray
-        document.querySelector('.chat-box').appendChild(systemMessage);
+    const chatBox = document.querySelector('.chat-box');
+    chatBox.scrollTop = chatBox.scrollHeight;
+    playSound('join-sound');
+}
 
-        // Scroll to the bottom of the chat box
-        const chatBox = document.querySelector('.chat-box');
-        chatBox.scrollTop = chatBox.scrollHeight;
+// Handle part or quit event
+if (data.event === 'part' || data.event === 'quit') {
+    console.log('WebSocket data:', data);
+    delete userRoles[data.nickname];
+    delete isParticipant[data.nickname];
+    populateNicklist(Object.keys(userRoles)); // Refresh the nicklist
+
+    const systemMessage = document.createElement('p');
+    systemMessage.textContent = data.event === 'part'
+        ? `‹ ${data.nickname} has left the channel`
+        : `‹ ${data.message}`;
+    systemMessage.style.color = 'gray';
+    document.querySelector('.chat-box').appendChild(systemMessage);
+
+    const chatBox = document.querySelector('.chat-box');
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// Handle kick event
+if (data.event === 'kick') {
+    delete userRoles[data.knickname];
+    delete isParticipant[data.knickname];
+    populateNicklist(Object.keys(userRoles)); // Refresh the nicklist
+
+    const systemMessage = document.createElement('p');
+    systemMessage.textContent = data.message;
+    systemMessage.style.fontWeight = 'bold';
+    systemMessage.style.color = '#FF0000';
+    document.querySelector('.chat-box').appendChild(systemMessage);
+
+    const chatBox = document.querySelector('.chat-box');
+    chatBox.scrollTop = chatBox.scrollHeight;
+    playSound('kick-sound');
+
+    console.log(`User ${data.knickname} kicked. Updated userRoles:`, userRoles);
+    console.log(`Updated isParticipant:`, isParticipant);
+}  
     }
-    } else if (data.type === 'topic') {
-        const topicElement = document.createElement('p');
-        const prefix = document.createElement('span');
-        prefix.textContent = "The chat’s topic is: ";
-        prefix.style.color = '#289e92';
+if (data.type === 'topic') {
+    // Handle topic change
+    const topicElement = document.createElement('p');
+    const prefix = document.createElement('span');
+    prefix.textContent = "The chat’s topic is: ";
+    prefix.style.color = '#289e92';
 
-        const topicText = document.createElement('span');
-        topicText.textContent = data.topic || 'No topic provided'; // Fallback if no topic is provided
-        topicText.style.color = 'black';
-        topicText.style.fontStyle = 'italic';
+    const topicText = document.createElement('span');
+    topicText.textContent = data.topic || 'No topic provided'; // Fallback if no topic is provided
+    topicText.style.color = 'black';
+    topicText.style.fontStyle = 'italic';
 
-        topicElement.appendChild(prefix);
-        topicElement.appendChild(topicText);
-        topicElement.style.padding = '5px';
-        topicElement.style.margin = '5px 0';
+    topicElement.appendChild(prefix);
+    topicElement.appendChild(topicText);
+    topicElement.style.padding = '5px';
+    topicElement.style.margin = '5px 0';
 
-        document.querySelector('.chat-box').appendChild(topicElement);
-    } else if (data.type === 'nicklist') {
+    document.querySelector('.chat-box').appendChild(topicElement);
+
+    // Scroll to the bottom of the chat box
+    const chatBox = document.querySelector('.chat-box');
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+if (data.type === 'nicklist-count') {
+    console.log('👥 Nicklist count received:', data.users);
+    updateUserCount(data.userCount);
+}
+    if (data.type === 'nicklist') {
         console.log('👥 Nicklist data received:', data.users);
 
         // Clear the existing userRoles object
         Object.keys(userRoles).forEach(key => delete userRoles[key]);
-    
         // Process each user in the nicklist
         data.users.forEach(user => {
             // Remove leading colon if present
@@ -610,9 +728,9 @@ function connectWebSocket() {
                 userRoles[user] = 'host'; // Host (mode +o)
             } else if (user.startsWith('+')) {
                 user = user.substring(1);
-                userRoles[user] = 'participant'; // Participant (mode +v)
+                userRoles[user] = 'member'; // Participant (mode +v)
             } else {
-                userRoles[user] = 'spectator'; // Spectator (no prefix or mode -v)
+                userRoles[user] = 'member'; // Spectator (no prefix or mode -v)
             }
         });
     

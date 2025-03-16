@@ -168,7 +168,7 @@ $ownerkey = htmlspecialchars($_POST['ownerkey'] ?? 'No Ownerkey');
         let nickname = "<?php echo $nickname; ?>"; // Use the nickname from the URL parameter
         nickname = nickname.replace(" ","");
     </script>
-    <script src="chatroom.js"></script>
+    <script src="chatroomv2.js"></script>
     <script>
    
         </script>

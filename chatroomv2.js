@@ -1,3 +1,7 @@
+function toggleNicklist() {
+    const nicklist = document.getElementById('nicklist');
+    nicklist.classList.toggle('open');
+}
 document.addEventListener('DOMContentLoaded', () => {
     // Global variables
     let wss;
@@ -24,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const cancelHostKeyword = document.getElementById('cancel-host-keyword');
     const submitHostKeyword = document.getElementById('submit-host-keyword');
     const hostKeywordInput = document.getElementById('host-keyword-input');
+
 
     sendButton.addEventListener('click', () => {
         sendMessage();
@@ -1643,5 +1648,5 @@ function getModeMessage(nick, targetNick, mode) {
         playSound('Door-sound');
         // You can restore the state or update the UI accordingly
     }
-    
+
 });

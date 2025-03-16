@@ -502,12 +502,22 @@ wss.on('connection', (ws) => {
                 // Broadcast updated nicklist to all clients in the channel
                // sendNicklist(event.channel, users, users.length);
 
-                if (event.message != "") {
+                    if (nickname !== event.kicked) {
+                        if (event.message != "") {
                 msg = `Host ${event.nick} has kicked ${event.kicked} out of the Channel (${event.message})`;
-                }
+                        }
                 else {
                 msg = `Host ${event.nick} has kicked ${event.kicked} out of the Channel`;           
-                }       
+                } 
+            }      
+            else {
+                if (event.message != "") {
+                    msg = `Host ${event.nick} has kicked You out of the Channel (${event.message})`;
+                            }
+                    else {
+                    msg = `Host ${event.nick} has kicked You out of the Channel`;           
+                    } 
+                }
                 // Send the PART message only to the relevant WebSocket client
                 wsClients.forEach((info, ws) => {
                     if (info.client === client && ws.readyState === WebSocket.OPEN) {

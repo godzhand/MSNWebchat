@@ -88,12 +88,15 @@ a:hover {
     height: calc(100vh - 60px);
     overflow: hidden;
 }
-
+#RoomList {
+    display: "contents";
+} 
 .chat-box {
     flex: 1;
     padding: 20px;
     box-sizing: border-box;
     overflow-y: scroll;
+    overflow-x: hidden;
     scrollbar-width: thin;
     scrollbar-color: #6a8fcc #f9f9f9;
     max-height: 84%;
@@ -472,7 +475,8 @@ a:hover {
  .nicklist {
               max-height: 57%;
 
-    }    
+    }
+
 .context-menu ul li.submenu ul {
         left: auto;
         right: 100%; /* Move submenu to the left of the parent menu */
@@ -516,6 +520,9 @@ a:hover {
 
     .toggle-nicklist.mobile-only {
         display: block;
+        position: relative;
+        bottom: -78px;
+        left: -45px;
     }
 }
 
@@ -527,7 +534,7 @@ a:hover {
 
     .nicklist.open {
         right: 0%;
-	width: 88%;
+	width: 20%;
     }
 }
 
@@ -547,9 +554,9 @@ a:hover {
    
     }
     .nicklist {
-        width: 25%;
-        right: -6%;
-        top: 100px;
+        right: -8px;
+        top: -58px;
+    
     }
 
     .nicklist.open {
@@ -575,26 +582,35 @@ a:hover {
     }
     #channel-switcher {
         position: absolute;
-        right: 8px;
-        top: 63px;
+        right: 32px;
+        top: 24px;
         width: 340px;
+        z-index: 1;
+    }
+    html {
+        overflow-y: hidden;
     }
     .nicklist {
 width: 20%;
         right: 0%;
-        max-height: 76%;
-        top: 95px;
+        max-height: 67%;
+        top: 125px;
     }
 
     .nicklist.open {
-        right: -170px;
+        right: -70%;
     }
 
     .chat-box {
-        width: 70%;
+        width: 78%;
+        max-height: 80%;
+
+        
     }
 }
-
+.roomlist-room-list {
+    overflow-y: scroll;
+}
 @media (min-width: 1920px) {
 
 
@@ -629,19 +645,21 @@ width: 20%;
 
     #channel-switcher {
         position: absolute;
-        right: 8px;
-        top: 64px;
+        right: 23px;
+        top: 24px;
         width: 189px;
     }
     .nicklist {
         width: 25%;
-        right: -6%;
-        top: 100px;
-            max-height: 76%;
-            
+        right: -5%;
+        top: 122px;
+        max-height: 49%;
 
     }
 
+    html, body {
+        overflow: unset;
+    }
     .nicklist.open {
         right: 0;
     }
@@ -653,17 +671,24 @@ width: 20%;
 }
 
 @media (max-width: 767px) {
+
+    html, body {
+        overflow-y: scroll;
+    }
     #channel-switcher {
-    position: absolute;
-    top: 19px;
-    left: 4px;
+        position: absolute;
+        top: -9px;
+        left: 4px;
     z-index: 7;
     width: 153px;
     }
 .chat-input-container {
 width: 100%;
 }
-
+.roomlist-container {
+position: absolute;
+top: 59px;
+}
     .nicklist {
         right: 100%;
 	overflow-y: scroll;

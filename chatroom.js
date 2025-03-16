@@ -1,3 +1,6 @@
+let wss;
+document.addEventListener('DOMContentLoaded', () => {
+
 const userRoles = {}; // Global object to track user roles
 let previousRoles = {}; // Stores the previous role of each user
 const modeQueue = []; // Queue to hold mode change messages
@@ -6,6 +9,8 @@ let currentMessageElement = null; // Track the current message element
 const isParticipant = {
 
 };
+
+
 function processQueue() {
     if (modeQueue.length === 0) {
         isProcessing = false;
@@ -58,15 +63,15 @@ const MODE_ACTIONS = {
     '+q': (targetNick) => {
         previousRoles[targetNick] = userRoles[targetNick] || 'member';
         userRoles[targetNick] = 'owner';
-        isParticipant[targetNick] = false;
+      //  isParticipant[targetNick] = false;
     },
     '+o': (targetNick) => {
         previousRoles[targetNick] = userRoles[targetNick] || 'member';
         userRoles[targetNick] = 'host';
-        isParticipant[targetNick] = false;
+     //   isParticipant[targetNick] = false;
     },
     '+v': (targetNick) => {
-        userRoles[targetNick] = 'member';
+       userRoles[targetNick] = 'participant';
         isParticipant[targetNick] = true;
     },
     '-v': (targetNick) => {
@@ -74,14 +79,16 @@ const MODE_ACTIONS = {
         isParticipant[targetNick] = false;
     },
     '-o': (targetNick) => {
-        userRoles[targetNick] = previousRoles[targetNick] || 'member';
-        isParticipant[targetNick] = userRoles[targetNick] === 'participant';
-        delete previousRoles[targetNick];
+        userRoles[targetNick] = 'member';
+        if (isParticipant[targetNick]) {
+        userRoles[targetNick] = 'participant'; // Restore participant status
+        }
     },
     '-q': (targetNick) => {
-        userRoles[targetNick] = previousRoles[targetNick] || 'member';
-        isParticipant[targetNick] = userRoles[targetNick] === 'participant';
-        delete previousRoles[targetNick];
+            userRoles[targetNick] = 'member';
+            if (isParticipant[targetNick] === true) {
+            userRoles[targetNick] = 'participant'; // Restore participant status
+            }
     }
 };
 
@@ -91,13 +98,13 @@ function handleModeChange(nick, targetNick, mode) {
             // Store the current role before promoting to owner
             previousRoles[targetNick] = userRoles[targetNick] || 'member';
             userRoles[targetNick] = 'owner';
-            isParticipant[targetNick] = false; // Owner is not a participant
+          //  isParticipant[targetNick] = false; // Owner is not a participant
             break;
         case '+o': // Host
             // Store the current role before promoting to host
             previousRoles[targetNick] = userRoles[targetNick] || 'member';
             userRoles[targetNick] = 'host';
-            isParticipant[targetNick] = false; // Host is not a participant
+         //   isParticipant[targetNick] = false; // Host is not a participant
             break;
         case '+v': // Participant
             // Only update role if the user is not already an owner or host
@@ -115,15 +122,20 @@ function handleModeChange(nick, targetNick, mode) {
             break;
         case '-o': // Remove host
             // Revert to the previous role if available, otherwise set to member
-            userRoles[targetNick] = previousRoles[targetNick] || 'member';
-            isParticipant[targetNick] = (userRoles[targetNick] === 'participant'); // Restore participant status
+        //    userRoles[targetNick] = 'member';
+        userRoles[targetNick] = 'member';
+            if (isParticipant[targetNick] === true) {
+            userRoles[targetNick] = 'participant'; // Restore participant status
+            }
             delete previousRoles[targetNick]; // Clear the stored previous role
             break;
         case '-q': // Remove owner
             // Revert to the previous role if available, otherwise set to member
             userRoles[targetNick] = 'member';
-            isParticipant[targetNick] = (userRoles[targetNick] === 'participant'); // Restore participant status
-            delete previousRoles[targetNick]; // Clear the stored previous role
+            if (isParticipant[targetNick] === true) {
+            userRoles[targetNick] = 'participant'; // Restore participant status
+            }      
+                delete previousRoles[targetNick]; // Clear the stored previous role
             break;
         default:
             console.log(`Unhandled mode: ${mode}`);
@@ -139,6 +151,7 @@ function handleModeChange(nick, targetNick, mode) {
 
 function populateNicklist(users) {
     const nicklistUsers = document.getElementById('nicklist-users');
+    const fragment = document.createDocumentFragment();
     nicklistUsers.innerHTML = ''; // Clear existing list
 
     // Group nicknames by their roles
@@ -209,9 +222,10 @@ function populateNicklist(users) {
             li.classList.add('spectator');
         }
 
-        nicklistUsers.appendChild(li);
+        fragment.appendChild(li);
     });
-
+    nicklistUsers.innerHTML = '';
+    nicklistUsers.appendChild(fragment);
     // Debugging: Log the state of userRoles and groups
     console.log('Nicklist updated with roles:', groups);
     console.log('Current userRoles:', userRoles);
@@ -236,14 +250,30 @@ if (userCountMobileElement) {
 const emoticonMap = {
     ":)": "111.png",
     ":(": "112.png",
-    ":D": "113.png",
-    ":P": "114.png",
-    ":O": "115.png",
+    ":|": "113.png",
+    ":beer:": "114.png",
+    ":love:": "115.png"
     // Add more mappings as needed
 };
-
-
-
+//width: 82px;
+//height: 63px;
+const emoticonMapg = {
+    ":matrix:": "matrix.gif",
+    ":c4:": "c4.gif",
+        ":thug:": "thug.gif",
+        ":pot:": "pot.gif"
+    // Add more mappings as needed
+};
+function replaceEmoticonsWithgifs(message) {
+    // Iterate over the emoticon map
+    for (const [emoticong, imageFileg] of Object.entries(emoticonMapg)) {
+        // Replace each emoticon with an <img> tag
+        const imagePathg = `MSN/${imageFileg}`;
+        const imgTagg = `<img src="${imagePathg}" alt="${emoticong}" style="width: 65px; height: 48px;">`;
+        message = message.replace(new RegExp(escapeRegExp(emoticong), 'g'), imgTagg);
+    }
+    return message;
+}
 function replaceEmoticonsWithImages(message) {
     // Iterate over the emoticon map
     for (const [emoticon, imageFile] of Object.entries(emoticonMap)) {
@@ -306,15 +336,7 @@ function resetChatUI() {
     isUIReset = true; // Set the flag to true after resetting the UI
 }
 
-let wss;
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Update the channel name in the UI
-    document.getElementById('channel-name').textContent = channelName;
-
-    // Connect to the WebSocket server
-    connectWebSocket();
-});
 
 let isSoundPlaying = false; // Flag to track if a sound is currently playing
 const soundQueue = []; // Queue to store sounds that need to be played after the current sound finishes
@@ -500,13 +522,18 @@ function connectWebSocket() {
                 break;
             case '-o': // Remove host
                 // Revert to the previous role if available, otherwise set to spectator
-                userRoles[targetNick] = 'member';
+                if (isParticipant[targetNick]) {
+                    userRoles[targetNick] = 'participant';
+                    }
                 // Clear the previous role after demotion
               //  delete previousRoles[targetNick];
                 break;
             case '-q': // Remove owner
+            if (isParticipant[targetNick]) {
+            userRoles[targetNick] = 'participant';
+            }
                 // Revert to the previous role if available, otherwise set to spectator
-                userRoles[targetNick] = 'member';
+              //  userRoles[targetNick] = 'member';
                 // Clear the previous role after demotion
               //  delete previousRoles[targetNick];
                 break;
@@ -536,10 +563,11 @@ function connectWebSocket() {
     } else if (data.type === 'message') {
         // Replace emoticons in the message with images
         const messageWithEmoticons = replaceEmoticonsWithImages(data.message);
+        const messageWithEmoticonsAndGifs = replaceEmoticonsWithgifs(messageWithEmoticons);
 
         // Display the chat message
         const messageElement = document.createElement('p');
-        messageElement.innerHTML = `<strong>${data.nick}:</strong> ${messageWithEmoticons}`;
+        messageElement.innerHTML = `<strong>${data.nick}:</strong> ${messageWithEmoticonsAndGifs}`;
         document.querySelector('.chat-box').appendChild(messageElement);
 
         // Scroll to the bottom of the chat box
@@ -670,12 +698,27 @@ if (data.event === 'kick') {
     systemMessage.textContent = data.message;
     systemMessage.style.fontWeight = 'bold';
     systemMessage.style.color = '#FF0000';
-    document.querySelector('.chat-box').appendChild(systemMessage);
+   document.querySelector('.chat-box').appendChild(systemMessage);
 
     const chatBox = document.querySelector('.chat-box');
     chatBox.scrollTop = chatBox.scrollHeight;
-    playSound('kick-sound');
+    if (data.knickname === nickname) {
+        playSound('kick-sound2');
+    const sendbut =  document.querySelector('#send-button');
+    sendbut.innerHTML = "rejoin";
+    Object.keys(userRoles).forEach(key => delete userRoles[key]);
+    updateUserCount(0);
+    const nicklistUsers = document.getElementById('nicklist-users');
+    nicklistUsers.innerHTML = ''; // Clear existing list
+    sendbut.removeEventListener('click', sendMessage);
+    sendbut.addEventListener('click', handleRejoin);
 
+    }
+    else {
+        playSound('kick-sound');
+    }
+   // const sendbut =  document.querySelector('#send-button');
+   // sendbut.innerHTML = "Rejoin";
     console.log(`User ${data.knickname} kicked. Updated userRoles:`, userRoles);
     console.log(`Updated isParticipant:`, isParticipant);
 }  
@@ -728,7 +771,7 @@ if (data.type === 'nicklist-count') {
                 userRoles[user] = 'host'; // Host (mode +o)
             } else if (user.startsWith('+')) {
                 user = user.substring(1);
-                userRoles[user] = 'member'; // Participant (mode +v)
+                userRoles[user] = 'participant'; // Participant (mode +v)
             } else {
                 userRoles[user] = 'member'; // Spectator (no prefix or mode -v)
             }
@@ -818,11 +861,6 @@ if (data.type === 'nicklist-count') {
 } */
 
 
-function toggleNicklist() {
-    const nicklist = document.getElementById('nicklist');
-    nicklist.classList.toggle('open');
-}
-document.addEventListener('DOMContentLoaded', () => {
     const chatInput = document.getElementById('chat-input');
     const sendButton = document.getElementById('send-button');
     const hostKeywordModal = document.getElementById('host-keyword-modal');
@@ -834,7 +872,16 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton.addEventListener('click', () => {
         sendMessage();
     });
+    function handleRejoin() {
+       // Revert the button text back to the original state
+       sendButton.innerHTML = originalSendButtonText;
 
+       sendRawCommand("//JOIN #");
+       // Reattach the original sendMessage functionality
+       sendButton.removeEventListener('click', handleRejoin);
+       sendButton.addEventListener('click', sendMessage);
+   }
+    const originalSendButtonText = sendButton.innerHTML;
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             sendMessage();
@@ -918,8 +965,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function sendNormalMessage(message) {
         const messageWithEmoticons = replaceEmoticonsWithImages(message);
+        const messageWithEmoticonsAndGifs = replaceEmoticonsWithgifs(messageWithEmoticons);
         const messageElement = document.createElement('p');
-        messageElement.innerHTML = `<strong style="color: darkblue;">${nickname}:</strong> ${messageWithEmoticons}`;
+        messageElement.innerHTML = `<strong style="color: darkblue;">${nickname}:</strong> ${messageWithEmoticonsAndGifs}`;
         document.querySelector('.chat-box').appendChild(messageElement);
         const chatBox = document.querySelector('.chat-box');
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -930,15 +978,56 @@ document.addEventListener('DOMContentLoaded', () => {
             }));
         }
     }
-});
-
-document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('channel-name').textContent = channelName;
     if (sessionStorage.getItem('hasInteracted') === 'true') {
         isUserInteracted = true;
         console.log('User has interacted with the previous page.');
         playSound('Door-sound');
         // You can restore the state or update the UI accordingly
     }
+    // Connect to the WebSocket server
+    connectWebSocket();
+})
+function openSection(sectionName, elmnt) {
+    // Hide all tab content
+    const tabcontent = document.getElementsByClassName("tabcontent");
+    for (let i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+    }
+
+    // Remove the "active" class from all tab links
+    const tablinks = document.getElementsByClassName("tablink");
+    for (let i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+
+    // Show the current tab content and mark the button as active
+    const sectionElement = document.getElementById(sectionName);
+    if (sectionElement) {
+        sectionElement.style.display = "contents";
+    }
+
+    if (elmnt) {
+        elmnt.className += " active";
+    }
+
+    // If switching to the ChatWindow, ensure the WebSocket connection is active
+    if (sectionName === "ChatWindow") {
+        //switchChannel("ChatWindow, this");
+        if (!wss || wss.readyState !== WebSocket.OPEN) {
+          //  connectWebSocket(); // Reconnect WebSocket if necessary
+        }
+    }
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Update the channel name in the UI
+
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+
 });
 
 // Add this to your existing client-side JavaScript
@@ -964,6 +1053,7 @@ window.addEventListener('pagehide', (event) => {
     console.log('User is leaving the page. Parting channel...');
     partChannel(); // Send the PART command to the server
 });
+
 document.addEventListener('DOMContentLoaded', () => {
     const nicklistUsers = document.getElementById('nicklist-users');
     let isDragging = false;
@@ -1041,7 +1131,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
 document.addEventListener('DOMContentLoaded', () => {
     const nicklist = document.getElementById('nicklist'); // Get the nicklist container
     const nicklistUsers = document.getElementById('nicklist-users'); // Get the nicklist-users container
@@ -1323,22 +1412,241 @@ function switchChannel() {
     //     });
 }
 
-// Optional: Set the default channel based on the current channel name
 document.addEventListener('DOMContentLoaded', () => {
-    const channelSwitcher = document.getElementById('channel-switcher');
+    // Set the default section to RoomList when the page loads
+  //  openSection("RoomList", document.querySelector('.tablink'));
 
-    // Clear the dropdown list
-    channelSwitcher.innerHTML = '';
+    // Update the channel name in the UI
+    document.getElementById('channel-name').textContent = channelName;
     if (channelName) {
-        const option = document.createElement('option');
-        option.value = channelName;
-        option.textContent = channelName;
-        channelSwitcher.appendChild(option);
+        openSection("ChatWindow", this)
+        document.querySelector('select').value = 'ChatWindow'; // Set "Option 2" as the default
+    }
+    // Add an event listener to the channel switcher dropdown
+    const channelSwitcher = document.getElementById('channel-switcher');
+    if (channelSwitcher) {
+        channelSwitcher.addEventListener('change', function () {
+            const selectedSection = this.value; // Get the selected value (RoomList or ChatWindow)
+            openSection(selectedSection, this);
+        });
+    }
 
-        // Set the dropdown to display the current channel
-        channelSwitcher.value = channelName;
+    // Connect to the WebSocket server (optional, depending on your use case)
+   // connectWebSocket();
+});
 
-        // Update the displayed channel name
-        document.getElementById('channel-name').textContent = channelName;
+
+// Add this JavaScript to handle the nickname functionality
+const nicknameDisplay = document.getElementById('nicknameDisplay');
+const nicknameEdit = document.getElementById('nicknameEdit');
+const nicknameSave = document.getElementById('nicknameSave');
+const nicknameEditButton = document.getElementById('nicknameEditButton');
+
+// Function to generate a random nickname
+function generateRandomNickname() {
+    const adjectives = ['Happy', 'Silly', 'Brave', 'Clever', 'Swift', 'Gentle', 'Witty', 'Calm', 'Bold', 'Lucky'];
+    const nouns = ['Cat', 'Dog', 'Fox', 'Bear', 'Wolf', 'Lion', 'Tiger', 'Eagle', 'Hawk', 'Owl'];
+    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+    return `${randomAdjective}${randomNoun}${Math.floor(Math.random() * 100)}`;
+}
+
+// Load or generate nickname
+     nickname = localStorage.getItem('nickname');
+if (!nickname) {
+    nickname = generateRandomNickname();
+    localStorage.setItem('nickname', nickname);
+}
+nicknameDisplay.textContent = `Nickname: ${nickname}`;
+
+// Toggle edit mode
+nicknameEditButton.addEventListener('click', () => {
+    nicknameDisplay.style.display = 'none';
+    nicknameEdit.style.display = 'inline-block';
+    nicknameSave.style.display = 'inline-block';
+    nicknameEditButton.style.display = 'none';
+    nicknameEdit.value = nickname;
+});
+
+// Save new nickname
+nicknameSave.addEventListener('click', () => {
+    const newNickname = nicknameEdit.value.trim();
+    if (newNickname) {
+        nickname = newNickname;
+        localStorage.setItem('nickname', nickname);
+        nicknameDisplay.textContent = `Nickname: ${nickname}`;
+        nicknameDisplay.style.display = 'inline-block';
+        nicknameEdit.style.display = 'none';
+        nicknameSave.style.display = 'none';
+        nicknameEditButton.style.display = 'inline-block';
+
+        // Update the room list with the new nickname
+        updateRoomList();
     }
 });
+
+// Rest of your existing JavaScript
+let ws = new WebSocket('wss://chat.saintsrow.net/rm');
+let allChannels = {}; // Store all channels grouped by category
+
+ws.onopen = () => {
+    console.log('✅ Connected to WebSocket server');
+    ws.send(JSON.stringify({ type: 'requestLatest' })); // Request latest XML data
+};
+
+ws.onmessage = (event) => {
+    console.log("Received:", event.data);
+    const data = JSON.parse(event.data);
+    if (data.type === 'xmlUpdate') {
+        allChannels = groupChannelsByCategory(data.data); // Group channels by category
+        updateRoomList(); // Update the table with the default category
+    }
+};
+
+ws.onerror = (error) => console.error('❌ WebSocket Error:', error);
+
+ws.onclose = () => {
+    console.log('❌ WebSocket connection closed. Attempting to reconnect...');
+    setTimeout(() => {
+        // Reconnect after 5 seconds
+        const newWs = new WebSocket('wss://chat.saintsrow.net/rm');
+        newWs.onopen = ws.onopen;
+        newWs.onmessage = ws.onmessage;
+        newWs.onerror = ws.onerror;
+        newWs.onclose = ws.onclose;
+        ws = newWs;
+    }, 5000);
+};
+
+// Group channels by category
+function groupChannelsByCategory(data) {
+    const categories = data.Channels.Category;
+    const groupedChannels = {};
+
+    categories.forEach(category => {
+        const categoryName = category.$.Name;
+        groupedChannels[categoryName] = category.Channel || [];
+    });
+
+    return groupedChannels;
+}
+
+// Update the room list based on the selected category
+function updateRoomList() {
+    const roomListBody = document.getElementById('roomListBody');
+    const paginationContainer = document.getElementById('paginationContainer'); // Pagination wrapper
+    roomListBody.innerHTML = ''; // Clear existing rows
+
+    const selectedCategory = document.getElementById('category').value;
+    let channels = allChannels[selectedCategory] || [];
+
+    // Sort channels by user count in descending order
+    channels.sort((a, b) => {
+        const userCountA = a.UserCount?.[0] ? parseInt(a.UserCount[0], 10) : 0;
+        const userCountB = b.UserCount?.[0] ? parseInt(b.UserCount[0], 10) : 0;
+        return userCountB - userCountA;
+    });
+
+    // Pagination logic
+    const channelsPerPage = 6;
+    const totalChannels = channels.length;
+    const totalPages = Math.ceil(totalChannels / channelsPerPage);
+
+    // Hide pagination if less than 6 channels
+    paginationContainer.style.display = totalChannels > channelsPerPage ? 'block' : 'none';
+
+    let currentPage = 1; // Default to page 1
+    renderPage(currentPage, channels, channelsPerPage);
+
+    createPagination(totalPages, channels, channelsPerPage);
+}
+
+function renderPage(page, channels, channelsPerPage) {
+    const roomListBody = document.getElementById('roomListBody');
+    roomListBody.innerHTML = ''; // Clear previous content
+
+    const startIndex = (page - 1) * channelsPerPage;
+    const endIndex = startIndex + channelsPerPage;
+    const visibleChannels = channels.slice(startIndex, endIndex);
+
+    visibleChannels.forEach(channel => {
+        const userCount = channel.UserCount?.[0] ? parseInt(channel.UserCount[0], 10) : 0;
+        let roomName = channel.$.Name || 'Unnamed Room';
+
+        // Remove %# from room names
+        roomName = roomName.replace(/^%#/, '');
+
+        // Replace \b with a space in the room name
+        roomName = roomName.replace(/\\b/g, ' ');
+
+        // Replace \b with a space in the topic
+        let topic = (channel.Topic?.[0] || 'No topic').replace(/\\b/g, ' ');
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${userCount}</td>
+            <td><a href="chatroom.php?rm=${encodeURIComponent(roomName)}&nickname=${encodeURIComponent(nickname)}">${roomName}</a></td>
+            <td>${topic}</td>
+            <td>${channel.$.Language?.[0] || 'Unknown'}</td>
+        `;
+        roomListBody.appendChild(row);
+        sessionStorage.setItem('hasInteracted', 'true');
+    });
+}
+
+function createPagination(totalPages, channels, channelsPerPage) {
+    const paginationContainer = document.getElementById('paginationContainer');
+    paginationContainer.innerHTML = ''; // Clear previous pagination
+
+    for (let i = 1; i <= totalPages; i++) {
+        const pageButton = document.createElement('button');
+        pageButton.innerText = i;
+        pageButton.addEventListener('click', () => renderPage(i, channels, channelsPerPage));
+        paginationContainer.appendChild(pageButton);
+    }
+}
+
+// Add event listener to the category dropdown
+document.getElementById('category').addEventListener('change', updateRoomList);
+
+// Optional: Periodic refresh (if WebSocket does not push updates automatically)
+setInterval(() => {
+    if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'requestLatest' })); // Request latest data
+    }
+}, 30000); // Refresh every 30 seconds
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && (!wss || wss.readyState !== WebSocket.OPEN)) {
+        console.log('Tab is visible again. Reconnecting WebSocket...');
+        connectWebSocket();
+    }
+});
+let wakeLock = null;
+
+async function requestWakeLock() {
+    try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        console.log('Wake Lock is active');
+    } catch (err) {
+        console.error('Failed to acquire Wake Lock:', err);
+    }
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        requestWakeLock();
+    } else if (wakeLock !== null) {
+        wakeLock.release().then(() => {
+            console.log('Wake Lock released');
+            wakeLock = null;
+        });
+    }
+});
+
+
+function toggleNicklist() {
+    const nicklist = document.getElementById('nicklist');
+    nicklist.classList.toggle('open');
+}
+requestWakeLock(); // Request Wake Lock on page load

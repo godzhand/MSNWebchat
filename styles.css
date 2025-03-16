@@ -56,7 +56,6 @@ body {
     padding: 0;
     background-color: #f4f4f4;
     height: 100vh;
-    overflow: hidden;
 }
 
 
@@ -65,10 +64,15 @@ html, body {
     margin: 0;
     padding: 0;
     overflow-x: hidden; /* Prevent horizontal scrolling */
+      
+    
 }
-
+html {
+    overflow-y: scroll;
+}
 body {
-  overflow-y: auto; /* Enable vertical scrolling */
+ 
+  padding: 10px;
 }
 
 /* ==================== Room List Styles ==================== */
@@ -82,15 +86,20 @@ body {
     flex-direction: column;
     align-items: center;
 }
-
+#RoomList {
+    position: relative;
+    top: 156px;
+}
 .roomlist-container {
-    width: 100%;
+    width: 95%;
     max-width: 1200px;
     background: #fff;
     padding: 20px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
+    position: relative;
+    top: 125px;
 }
 
 .roomlist-h1, .roomlist-h2 {
@@ -925,5 +934,120 @@ body {
 
     .createchannel-form-group textarea {
         height: 80px;
+    }
+}
+
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Header Styles */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #97bdff, #6a8fcc);
+    border-bottom: 1px solid #ccc;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+}
+
+.header .channel-name {
+    font-size: 18px;
+    font-weight: normal;
+    color: #fff;
+}
+
+.header #user-count {
+    font-size: 14px;
+    color: #ffffff;
+}
+
+/* Switch Bar Styles */
+.switch {
+    position: fixed;
+    top: 60px; /* Adjust based on header height */
+    left: 0;
+    width: 100%;
+    background-color: #fff;
+    padding: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 999;
+}
+
+#channel-switcher {
+    width: 35%;
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: aliceblue;
+    font-size: 16px;
+}
+
+/* Chat Container Styles */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 120px); /* Adjust based on header and switch bar height */
+    overflow: hidden;
+    margin-top: 120px; /* Adjust based on header and switch bar height */
+}
+
+/* Nicklist Styles */
+.nicklist {
+    position: fixed;
+    top: 120px;
+    right: 3%;
+    width: 16%;
+    height: calc(100vh - 120px); /* Adjust based on header and switch bar height */
+    background-color: #fff;
+    border-left: 1px solid #ccc;
+    overflow-y: auto;
+    transition: right 0.3s ease-in-out;
+    z-index: 998;
+}
+
+.nicklist.open {
+}
+
+/* Media Queries for Mobile */
+@media (max-width: 768px) {
+    .header {
+        padding: 10px;
+    }
+
+    .header .channel-name {
+        font-size: 16px;
+    }
+
+    .header #user-count {
+        font-size: 12px;
+    }
+
+    .switch {
+        top: 65px; /* Adjust based on header height */
+    }
+
+    .chat-container {
+        height: calc(100vh - 100px); /* Adjust based on header and switch bar height */
+        margin-top: 100px; /* Adjust based on header and switch bar height */
+        
+    }
+
+    .nicklist {
+        right: -100%;
+        top: 100px; /* Adjust based on header and switch bar height */
+        height: calc(100vh - 100px); /* Adjust based on header and switch bar height */
     }
 }

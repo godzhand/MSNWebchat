@@ -574,7 +574,7 @@ wss.on('connection', (ws) => {
         
                     // Send the updated nicklist and user count to all relevant WebSocket clients
                     wsClients.forEach((info, ws) => {
-                        if (ws.readyState === WebSocket.OPEN) {
+                        if (ws.readyState === WebSocket.OPEN && info.nickname === nickname) {
                             ws.send(JSON.stringify({ type: 'nicklist-count', users: filteredUsers, userCount }));
                         }
                     });

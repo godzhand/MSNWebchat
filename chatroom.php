@@ -2,7 +2,6 @@
 // Extract the channel name from the URL parameter 'rm'
 // Extract the channel name from the URL parameter 'rm'
 $channelName = htmlspecialchars($_GET['rm'] ?? $_POST['channel-name']); // Default to 'Unnamed Channel' if not provided
-
 // Extract the nickname from the URL parameter 'nickname'
 $nickname = htmlspecialchars($_GET['nickname'] ?? ''); // Default to empty string if not provided
 
@@ -27,8 +26,6 @@ $ownerkey = htmlspecialchars($_POST['ownerkey'] ?? 'No Ownerkey');
 <div class="switch">
     <select id="channel-switcher">
         <option value="RoomList">Room List</option>
-        <option value="ChatWindow">Chat Window</option>
-        <!-- Add more channels as needed -->
     </select>
 </div>
 <div id="RoomList" class="tabcontent">
@@ -73,6 +70,7 @@ $ownerkey = htmlspecialchars($_POST['ownerkey'] ?? 'No Ownerkey');
             </table>
         </div>
     </div>
+    
     <div id="ChatWindow" class="tabcontent">
     <div class="header">
     <button class="toggle-nicklist desktop-only" onclick="toggleNicklist()">☰</button>
@@ -82,14 +80,11 @@ $ownerkey = htmlspecialchars($_POST['ownerkey'] ?? 'No Ownerkey');
     <button class="toggle-nicklist mobile-only" onclick="toggleNicklist()">☰</button>
 </div>
 
-<div class="chat-container">
-    <div class="chat-box">
-        <p id="message1"></p>
-        <p id="message2" style="display: none;">Connected!</p>
-    </div>
+<div id="chat-container" class="chat-container">
+</div>
 </div>
 
-<div class="chat-input-container">
+<div id="chat-input-container" class="chat-input-container">
     <input type="text" id="chat-input" placeholder="Type your message here..." />
     <button id="send-button">Send</button>
 </div>
@@ -105,11 +100,12 @@ $ownerkey = htmlspecialchars($_POST['ownerkey'] ?? 'No Ownerkey');
         </div>
     </div>
 </div>
-<div class="nicklist" id="nicklist">
-    <h3></h3>
+<div id="nicklist" class="nicklist">
+<div id="nicklist-container">
     <ul id="nicklist-users">
         <!-- Nicklist will be populated dynamically -->
     </ul>
+</div>
 </div>
 <!-- Context Menu -->
 <div id="contextMenu" class="context-menu">
@@ -150,28 +146,35 @@ $ownerkey = htmlspecialchars($_POST['ownerkey'] ?? 'No Ownerkey');
         Your browser does not support the audio element.
     </audio>
     <audio id="kick-sound">
-        <source src="sounds/sounds/kick2.mp3" type="audio/mp3">
+        <source src="sounds/sounds/kick.mp3" type="audio/mp3">
         Your browser does not support the audio element.
     </audio>
     <audio id="kick-sound2">
         <source src="sounds/sounds/kick1.mp3" type="audio/mp3">
         Your browser does not support the audio element.
     </audio>
+    <audio id="thunder-sound">
+        <source src="sounds/sounds/power-up-type-1.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
     <script>
         // Pass PHP variables to JavaScript
         const category = "<?php echo $category; ?>";
         const channelName = "<?php echo $channelName; ?>"; // Use the channelName from the URL parameter
+      //  const channel = channelName;
+        // currentChannel = channelName;
         const channelTopic = "<?php echo $channelTopic; ?>"; // Empty string if not provided
         const language = "<?php echo $language; ?>";
         const profanityFilter = "<?php echo $profanityFilter; ?>";
         const ownerkey = "<?php echo $ownerkey; ?>";
-        let nickname = "<?php echo $nickname; ?>"; // Use the nickname from the URL parameter
-        nickname = nickname.replace(" ","");
+       // let nickname = "<?php echo $nickname; ?>"; // Use the nickname from the URL parameter
+       // nickname = nickname.replace(" ","");
     </script>
-    <script src="chatroomv2.js"></script>
+
     <script>
-   
+  // connectWebSocket(channel);
         </script>
 </div>
 </body>
+<script src="chatroomv5.js"></script>
 </html>

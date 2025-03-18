@@ -37,7 +37,7 @@
 /* General Styles */
 body {
     font-family: "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif;
-    background-color: #f9f9f9;
+    background-color: #fff;
     margin: 0;
     padding: 0;
     height: 100vh;
@@ -126,25 +126,6 @@ a:hover {
     line-height: 1.5;
 }
 
-.chat-box p:first-child {
-    color: #379637;
-}
-
-.chat-box p:nth-child(2) {
-    color: #FF0000;
-}
-
-.chat-box p:nth-child(5)::before {
-    color: rgb(209, 255, 5);
-}
-
-.chat-box p:nth-child(6)::before {
-    color: rgb(0, 16, 247);
-}
-
-.chat-box p:nth-child(7)::before {
-    color: rgb(0, 0, 0);
-}
 
 /* Chat Input Container Styles */
 .chat-input-container {
@@ -521,8 +502,8 @@ a:hover {
     .toggle-nicklist.mobile-only {
         display: block;
         position: relative;
-        bottom: -78px;
-        left: -45px;
+        top: 82px;
+        right: 46px;
     }
 }
 
@@ -564,7 +545,8 @@ a:hover {
     }
 
     .chat-box {
-        width: 75%;
+        width: 77%;
+        display: block;
     }
 }
 

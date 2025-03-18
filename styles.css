@@ -942,7 +942,7 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
+    background-color: #fff;
     height: 100vh;
     overflow: hidden;
 }
@@ -972,6 +972,9 @@ body {
 .header #user-count {
     font-size: 14px;
     color: #ffffff;
+    position: absolute;
+    top: 44px;
+    right: 64px;
 }
 
 /* Switch Bar Styles */
@@ -1033,6 +1036,9 @@ body {
 
     .header #user-count {
         font-size: 12px;
+        position: absolute;
+        top: 42px;
+        left: 50%
     }
 
     .switch {

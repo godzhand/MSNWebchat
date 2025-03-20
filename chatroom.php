@@ -20,12 +20,116 @@ $ownerkey = htmlspecialchars($_POST['ownerkey'] ?? 'No Ownerkey');
     <title>Chat Window</title>
     <link rel="stylesheet" href="chatroomxxx.css">
     <link rel="stylesheet" href="styles.css">
-
+    <link href="chat.css" rel="stylesheet" type="text/css">
 </head>
-<body>
+<body topmargin="0" leftmargin="0" 
+oncontextmenu="return false" ondragstart="return false">
+ <TABLE BORDER="0" WIDTH="100%" CELLSPACING="0" 
+CELLPADDING="0">
+  <TR VALIGN="top">
+   <TD WIDTH="87%" VALIGN="top">
+    <TABLE border=0 cellPadding=0 cellSpacing=0 width=100%>
+     <TR>
+      <TD><A 
+href="http://chat.msn.com/default.msnw" target=_top title="Go to the MSN Chat home 
+page."><IMG height=32 align=absmiddle src="MSN\chatlogo.gif" border=0 
+></A></TD>
+      <TD valign=bottom width=51><IMG src="MSN\sharkfin.gif" width=51 
+height=32></TD>
+      <TD valign=top class="titleframe" width=100%>
+       <TABLE border=0 cellpadding=0 cellspacing=0 width=100%>
+        <TR>
+         <TD><IMG border=0 height=7 width=100% src="MSN\top_line.gif"></TD>
+        </TR>
+        <TR>
+         <TD>
+          <table border=0 cellPadding=0 cellSpacing=0 width=100%>
+           <tr>
+            <TD align=center width=19 class="roomtitle"><IMG 
+src="MSN\star.gif"></TD>
+            <TD><td><p class="roomtitle">SomeWhere</p></td>
+            <TD class="roomtitle"><IMG 
+src="MSN\star.gif"></TD>
+           </tr>
+          </table>
+         </TD>
+        </TR>
+       </TABLE>
+      </TR>
+     <TR class="titleframe">
+      <TD colspan=2><IMG border=0 width=161 height=6 
+src="MSN\left_top_line.gif"></TD>
+      <TD><IMG height=1 width=1 src="MSN\pixel1x1.gif" border=0></TD>
+     </TR>
+     <TR class="titleframe">
+      <TD colspan=4>
+    <center>
+       <TABLE border=0 cellPadding=2 cellSpacing=0>
+        <TR>
+         <TD><IMG border=0 width=5 height=1 src="MSN\c.gif"></TD>
+     	 <TD align=center width=19></TD>
+     	 <TD align=center width=19><IMG height=15 width=1 
+src="MSN\y1x1.gif"></TD>
+         <TD><A class="HeaderLink" href="http://chat.msn.com/default.msnw" target=_top 
+title="Go to the MSN Chat home page.">Chat Home</A></TD>
+         <TD align=center width=19><IMG height=15 width=1 src="MSN\y1x1.gif"></TD>
+         <TD><A class="HeaderLink" href 
+="javascript:window.open('http://chat.msn.com/default.msnw'); void('');" title="Connect to 
+other rooms from the Chat directory.">More Rooms</A></TD>
+         <TD align=center width=19><IMG height=15 width=1 src="MSN\y1x1.gif"></TD>
+         <TD><A class="HeaderLink" 
+href="javascript:window.open('http://chat.msn.com/friend.msnw?mode=2&code=6225150
+0'); void('');" title="Find out if a friend is chatting right now.">Find a Friend</A></TD>
+         <TD align=center width=19><IMG height=15 width=1 src="MSN\y1x1.gif"></TD>
+         <TD><A class="HeaderLink" 
+href="javascript:window.open('http://vipercentral.vze.com/m_options.php','_blank','tool
+bar=0,location=0,directories=0,status=0,menubar=0,scrollbars=1,resizable=1,height=420,wi
+dth=630'); void('');" title="View and change your chat room options.">Chat Room 
+Options</A></TD>
+         <TD align=center width=19><IMG height=15 width=1 src="MSN\y1x1.gif"></TD>
+         <TD><A class="HeaderLink" href="http://chat.msn.com/default.msnw" target=_top 
+title="Leave this chat room.">Exit</A></TD>
+         <TD align=center width=19><IMG height=15 width=1 src="MSN\y1x1.gif"></TD>
+         <TD><A class="HeaderLink" 
+href="javascript:window.open('http://chat.msn.com/PaneHelpFrame.msnw?H_VER=1.7','
+_blank','toolbar=0,location=0,directories=0,status=0,men
+ubar=0,scrollbars=1,resizable=1,height=542,width=177,Left=610,top=0'); void('');" title="Get 
+instructions and tips for using MSNChat.">Help</A></TD>
+	     <TD align=center width=19><IMG height=15 width=1 
+src="MSN\y1x1.gif"></TD>
+         <TD nowrap><A class="HeaderLink" 
+href="javascript:window.open('http://chat.msn.com/PaneHelpFrame.msnw?H_VER=1.7&
+TOPIC=CHAT_PROC_ProtectYourselfFromHarassment.htm&v1','_blank','toolbar=0,locatio
+n=0,directories=0,status=0,menubar=0,s
+crollbars=1,resizable=1,height=542,width=177,Left=610,top=0'); void('');" title="Learn how 
+to keep other chatters from harrassing you.">Stop Abuse</A></TD>
+         <TD align=center width=19><IMG height=15 width=1 src="MSN\y1x1.gif"></TD>
+         <TD align=center width=19></TD>
+        </TR>
+       </TABLE>
+    </center>
+      </TD>
+     </TR>
+    </TABLE>
+
+    <table width="100%" border="0" cellspacing="0" cellpadding="0"><!-- rem:bgcolor="#2288BB" -->
+     <tr>
+      <td valign=top width="87%">
+      </td>
+     </tr>
+    </table>
+   </TD></TR>
+  <TR>
+   <TD></TD>
+    </TR>
+   </TABLE>
+  </TD>
+ </TR>
+</TABLE>
+</div>
 <div class="switch">
     <select id="channel-switcher">
-        <option value="RoomList">Room List</option>
+        <option value="RoomList">ircx.saintsrow.net</option>
     </select>
 </div>
 <div id="RoomList" class="tabcontent">
@@ -70,7 +174,99 @@ $ownerkey = htmlspecialchars($_POST['ownerkey'] ?? 'No Ownerkey');
             </table>
         </div>
     </div>
-    
+    <div id="CreateChannel" class="tabcontent" style="display:none;">
+        <!-- Create Channel Section -->
+        <div class="createchannel-container">
+            <div class="createchannel-return-link">
+                <a href="#" onclick="openSection('RoomList', document.querySelector('.tablink'))">Return to Channel List</a>
+            </div>
+            <h1 class="createchannel-h1"></h1>
+            <form id="channel-form" action="chatroom.php" method="POST">
+                <div class="createchannel-form-section">
+                    <div class="createchannel-horizontal-group">
+                        <div class="createchannel-form-group">
+                            <label for="category">Select Category:</label>
+                            <select id="category" name="category">
+                                <option value="Computing">Computing</option>
+                                <option value="Conspiracies">Conspiracies</option>
+                                <option value="Gaming">Gaming</option>
+                                <option value="General" selected>General</option>
+                                <option value="News">News</option>
+                                <option value="Politics">Politics</option>
+                            </select>
+                        </div>
+                        <div class="createchannel-form-group">
+                            <label for="language">Language:</label>
+                            <select id="language" name="language" required>
+                                <option value="English">English</option>
+                                <option value="French">French</option>
+                                <option value="German">German</option>
+                                <option value="Japanese">Japanese</option>
+                                <option value="Swedish">Swedish</option>
+                                <option value="Dutch">Dutch</option>
+                                <option value="Korean">Korean</option>
+                                <option value="Chinese (Simplified)">Chinese (Simplified)</option>
+                                <option value="Portuguese">Portuguese</option>
+                                <option value="Finnish">Finnish</option>
+                                <option value="Danish">Danish</option>
+                                <option value="Russian">Russian</option>
+                                <option value="Italian">Italian</option>
+                                <option value="Norwegian">Norwegian</option>
+                                <option value="Chinese (Traditional)">Chinese (Traditional)</option>
+                                <option value="Spanish">Spanish</option>
+                                <option value="Czech">Czech</option>
+                                <option value="Greek">Greek</option>
+                                <option value="Hungarian">Hungarian</option>
+                                <option value="Polish">Polish</option>
+                                <option value="Slovene">Slovene</option>
+                                <option value="Turkish">Turkish</option>
+                                <option value="Slovak">Slovak</option>
+                                <option value="Portuguese (Brazilian)">Portuguese (Brazilian)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="createchannel-form-section">
+                    <div class="createchannel-form-group">
+                        <label for="channel-name">Channel Name:</label>
+                        <input type="text" id="channel-name" name="channel-name" placeholder="Enter channel name" required>
+                    </div>
+                </div>
+                <div class="createchannel-form-section">
+                    <div class="createchannel-form-group">
+                        <label for="channel-topic">Topic of the Channel:</label>
+                        <textarea id="channel-topic" name="channel-topic" placeholder="Enter the topic of the channel" required></textarea>
+                    </div>
+                </div>
+                <div class="createchannel-form-section">
+                    <div class="createchannel-horizontal-group">
+                        <div class="createchannel-form-group">
+                            <label for="ownerkey">Ownerkey:</label>
+                            <input type="text" id="ownerkey" name="ownerkey" placeholder="Generating..." readonly>
+                            <div class="createchannel-tooltip" id="ownerkey-tooltip">Copied to clipboard!</div>
+                        </div>
+                        <div class="createchannel-form-group">
+                            <label for="profanity-filter">Profanity Filter:</label>
+                            <select id="profanity-filter" name="profanity-filter" required>
+                                <option value="disabled" selected>Disabled</option>
+                                <option value="enabled">Enabled</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="createchannel-form-section">
+                    <div class="createchannel-form-group">
+                        <label for="nickname">Nickname:</label>
+                        <input type="text" id="nickname" name="nickname">
+                    </div>
+                </div>
+                <div class="createchannel-navigation-buttons">
+                    <button type="submit">Create Channel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="ChatWindow" class="tabcontent">
     <div class="header">
     <button class="toggle-nicklist desktop-only" onclick="toggleNicklist()">☰</button>

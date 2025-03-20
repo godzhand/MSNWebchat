@@ -239,7 +239,10 @@ function openSection(sectionName, elmnt) {
 
     const sectionElement = document.getElementById(sectionName);
     if (sectionElement) {
-        sectionElement.style.display = "contents";
+        if (sectionName === "CreateChannel")  {
+            sectionElement.style.overflowY = "scroll";
+        }
+        sectionElement.style.display = "block";
     }
 
     if (elmnt) {
@@ -387,12 +390,21 @@ function generateRandomNickname() {
 
 
 function addModeChange(channel, nick, targetNick, mode) {
-    modeQueue.push({ channel, nick, targetNick, mode }); // Add the mode change to the queue
-    if (!isProcessing) {
-        processQueue(channel); // Start processing the queue if not already processing
-    }
-}
+    console.log("detected");
+    let systemMessage = document.createElement('p');
+    let messageText = getModeMessage(nick, targetNick, mode);
+    systemMessage.textContent = messageText;
+    systemMessage.classList.add('glitchy-fade-in');
+    systemMessage.style.color = 'gray';
 
+    const chatBox = document.querySelector(`[id="chat-box-${channel}"].chat-box`);
+    if (chatBox) {
+        chatBox.appendChild(systemMessage);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    currentMessageElement = systemMessage;
+}
 
 // Connect to a WebSocket for a specific channel
 function connectWebSocket(channel) {
@@ -510,10 +522,10 @@ function connectWebSocket(channel) {
                      }
              
                      // Rebuild the nicklist with updated roles
-                     const users = Object.keys(userRoles); // Get all users
-                     populateNicklist(currentChannel, users);
-                    handleModeChange(currentChannel, nick, targetNick, mode);
-                    addModeChange(currentChannel, nick, targetNick, mode); // Add the mode change to the queue
+                     const users = Object.keys(userRoles[channel]); // Get all users
+                    // populateNicklist(currentChannel, users);
+                    handleModeChange(channel, nick, targetNick, mode);
+                    addModeChange(channel, nick, targetNick, mode); // Add the mode change to the queue
                  }
              }
              if (data.type === 'rawmsg') {
@@ -689,7 +701,7 @@ function connectWebSocket(channel) {
              sendbut.innerHTML = "rejoin";
              Object.keys(userRoles[channel]).forEach(key => delete userRoles[channel][key]);
              updateUserCount(channel,0);
-             roomName = channelName.replace(/^%#/, '').replace(/\\b/g, ' ');
+             roomName =  channel.replace(/^%#/, '').replace(/\\b/g, ' ');
              const nicklistUsers = document.getElementById(`nicklist-${roomName}`);
              nicklistUsers.innerHTML = ''; // Clear existing list
              sendbut.removeEventListener('click', sendMessage);
@@ -733,13 +745,15 @@ function connectWebSocket(channel) {
              updateUserCount(channel,data.userCount);
          }
              if (data.type === 'nicklist') {
+                nchannel = data.channel;
+                nchannel = nchannel.replace(/^%#/, '').replace(/\\b/g, ' ');
                  console.log('👥 Nicklist data received:', data.users);
-                 if (userRoles[channel]) {
+                 if (userRoles[nchannel]) {
                  // Clear the existing userRoles object
-                 Object.keys(userRoles[channel]).forEach(key => delete userRoles[channel][key]);
+                 Object.keys(userRoles[nchannel]).forEach(key => delete userRoles[nchannel][key]);
                  }
-                 if (!userRoles[channel]) {
-                    userRoles[channel] = {};
+                 if (!userRoles[nchannel]) {
+                    userRoles[nchannel] = {};
                 }
                  // Process each user in the nicklist
                  data.users.forEach(user => {
@@ -751,21 +765,21 @@ function connectWebSocket(channel) {
                      // Assign roles based on prefixes
                      if (user.startsWith('.')) {
                          user = user.substring(1);
-                         userRoles[channel][user] = 'owner'; // Owner (mode +q)
+                         userRoles[nchannel][user] = 'owner'; // Owner (mode +q)
                      } else if (user.startsWith('@')) {
                          user = user.substring(1);
-                         userRoles[channel][user] = 'host'; // Host (mode +o)
+                         userRoles[nchannel][user] = 'host'; // Host (mode +o)
                      } else if (user.startsWith('+')) {
                          user = user.substring(1);
-                         userRoles[channel][user] = 'participant'; // Participant (mode +v)
+                         userRoles[nchannel][user] = 'participant'; // Participant (mode +v)
                      } else {
-                        userRoles[channel][user] = 'member'; // Spectator (no prefix or mode -v)
+                        userRoles[nchannel][user] = 'member'; // Spectator (no prefix or mode -v)
                      }
                  });
              
                  // Populate the nicklist with the updated roles
-                populateNicklist(channel, data.users);
-                 updateUserCount(channel, data.userCount);
+                populateNicklist(nchannel, data.users);
+                 updateUserCount(nchannel, data.userCount);
              }
          };
 
@@ -815,7 +829,7 @@ function handleWebSocketMessage(channel, data) {
             handleTimeMessage(channel, data);
             break;
         case 'system':
-            handleSystemMessage(channel, data);
+           // handleSystemMessage(channel, data);
             break;
         case 'topic':
             handleTopicChange(channel, data);
@@ -1018,75 +1032,7 @@ function handleTimeMessage(channel, data) {
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-function handleSystemMessage(channel, data) {
-    if (!userRoles[channel]) {
-        userRoles[channel] = {};
-    }
-    if (!isParticipant[channel]) {
-        isParticipant[channel] = {};
-    }
 
-    if (data.event === 'join' && data.nickname !== nickname) {
-        userRoles[channel][data.nickname] = 'member';
-        isParticipant[channel][data.nickname] = false;
-        populateNicklist(channel, Object.keys(userRoles[channel]));
-
-        const systemMessage = document.createElement('p');
-        systemMessage.textContent = `› ${data.nickname} has joined the channel`;
-        systemMessage.style.color = 'gray';
-        systemMessage.classList.add('glitchy-fade-in');
-        document.querySelector(`[id="chat-box-${channel}"].chat-box`).appendChild(systemMessage);
-
-        const chatBox = document.querySelector(`[id="chat-box-${channel}"].chat-box`);
-        chatBox.scrollTop = chatBox.scrollHeight;
-        playSound('join-sound');
-    }
-
-    if (data.event === 'part' || data.event === 'quit') {
-        delete userRoles[channel][data.nickname];
-        delete isParticipant[channel][data.nickname];
-        populateNicklist(channel, Object.keys(userRoles[channel]));
-
-        const systemMessage = document.createElement('p');
-        systemMessage.textContent = data.event === 'part'
-            ? `‹ ${data.nickname} has left the channel`
-            : `‹ ${data.message}`;
-        systemMessage.style.color = 'gray';
-        document.querySelector(`[id="chat-box-${channel}"].chat-box`).appendChild(systemMessage);
-
-        const chatBox = document.querySelector(`[id="chat-box-${channel}"].chat-box`);
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    if (data.event === 'kick') {
-        delete userRoles[channel][data.knickname];
-        delete isParticipant[channel][data.knickname];
-        populateNicklist(channel, Object.keys(userRoles[channel]));
-
-        const systemMessage = document.createElement('p');
-        systemMessage.textContent = data.message;
-        systemMessage.style.fontWeight = 'bold';
-        systemMessage.style.color = '#FF0000';
-        document.querySelector(`[id="chat-box-${channel}"].chat-box`).appendChild(systemMessage);
-
-        const chatBox = document.querySelector(`[id="chat-box-${channel}"].chat-box`);
-        chatBox.scrollTop = chatBox.scrollHeight;
-
-        if (data.knickname === nickname) {
-            playSound('kick-sound2');
-            const sendbut = document.querySelector('#send-button');
-            sendbut.innerHTML = "rejoin";
-            Object.keys(userRoles[channel]).forEach(key => delete userRoles[channel][key]);
-            updateUserCount(channel, 0);
-            const nicklistUsers = document.getElementById(`nicklist-${channelName}`);
-            nicklistUsers.innerHTML = '';
-            sendbut.removeEventListener('click', sendMessage);
-            sendbut.addEventListener('click', () => handleRejoin(channel));
-        } else {
-            playSound('kick-sound');
-        }
-    }
-}
 
 function handleTopicChange(channel, data) {
     const topicElement = document.createElement('p');
@@ -1157,6 +1103,7 @@ function resetChatUI(channel) {
 }
 
 function getModeMessage(nick, targetNick, mode) {
+    console.log("hit");
     const modeMessages = {
         '+q': `● ${nick} has made ${targetNick} an Owner.`,
         '-q': `● ${nick} has removed Owner from ${targetNick}.`,
@@ -1169,6 +1116,7 @@ function getModeMessage(nick, targetNick, mode) {
 }
 
 function processQueue(channel) {
+    console.log("d hit");
          // Remove %# from room names
         // channel = channel.replace(/^%#/, '');
 
@@ -1206,6 +1154,7 @@ function processQueue(channel) {
 
 
 function handleModeChange(channel, nick, targetNick, mode) {
+
     // Initialize the channel if it doesn't exist
     if (!userRoles[channel]) {
         userRoles[channel] = {};
@@ -1646,10 +1595,14 @@ function switchChannel(channelName) {
     }
     // Update the channel name display
     document.getElementById('channel-name').textContent = channelName;
+    document.getElementById('roomtitle').textContent = channelName;
+    if ("RoomList" ==  channelName) {
+        document.getElementById('roomtitle').textContent = 'ircx.saintsrow.net';
+    }
 
     // Update the user count display for the current channel
     const userCount = channelUserCounts[channelName] || 0; // Fallback to 0 if no count is available
-    updateUserCount(channelName, userCount);
+    updateUserCount(currentChannel, userCount);
 
     // Connect to the WebSocket if not already connected
     if (!channels[channelName]) {
@@ -1668,14 +1621,14 @@ function switchChannel(channelName) {
     // Handle special cases (e.g., RoomList)
     if (channelName === "RoomList") {
         document.getElementById("ChatWindow").style.display = "none";
-        document.getElementById("RoomList").style.display = "contents";
+        document.getElementById("RoomList").style.display = "flow";
         const chatinputcontainer = document.getElementById(`chat-input-container`);
         chatinputcontainer.style.display = "none";
         const entireNicklist = document.getElementById(`nicklist`);
         entireNicklist.style.display = "none";
     } else {
         document.getElementById("RoomList").style.display = "none";
-        document.getElementById("ChatWindow").style.display = "block";
+        document.getElementById("ChatWindow").style.display = "contents";
         const chatinputcontainer = document.getElementById(`chat-input-container`);
         chatinputcontainer.style.display = "flex";
         const entireNicklist = document.getElementById(`nicklist`);
@@ -1706,17 +1659,14 @@ function sendRawCommand(channel, command) {
         }));
     }
 }
-channelSwitcher.addEventListener('change', (e) => {
-    const selectedChannel = e.target.value;
-    switchChannel(selectedChannel);
-});
+
 
 // Initialize the default channel
 //if (!currentChannel) {
   //  currentChannel = "The Lobby"; // Default channel
    // connectWebSocket(channelName);
-   addChannelToSwitcher(channelName);
-    switchChannel(channelName);
+   //addChannelToSwitcher(channelName);
+    switchChannel("RoomList");
 //}
     // WebSocket for room list
     let ws = new WebSocket('wss://chat.saintsrow.net/rm');
@@ -1807,23 +1757,52 @@ channelSwitcher.addEventListener('change', (e) => {
     
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${userCount}</td>
-                <td><span class="room-link" style="cursor: pointer; color: blue; text-decoration: underline;" data-room="${encodeURIComponent(roomName)}">${roomName}</span></td>
-                <td>${topic}</td>
-                <td>${channel.$.Language?.[0] || 'Unknown'}</td>
-            `;
-            roomListBody.appendChild(row);
+            <td>${userCount}</td>
+            <td id="roomlistName">
+                <img src="MSN/aoldoorclosed.png" width="15" height="14" style="vertical-align: middle; margin-right: 5px;">
+                <img src="MSN/aoldooropen.png" width="15" height="14" style="vertical-align: middle; margin-right: 5px; display: none;">
+                <span class="room-link" style="cursor: pointer; color: blue; text-decoration: none;" data-room="${encodeURIComponent(roomName)}">${roomName}</span>
+            </td>
+            <td>${topic}</td>
+            <td>${channel.$.Language?.[0] || 'Unknown'}</td>
+        `;
+        roomListBody.appendChild(row);
+        
     
-            // Add event listener to the room link
-            const roomLink = row.querySelector('.room-link');
-            roomLink.addEventListener('click', () => {
-                if (roomName !== "%#RoomList") {
-                addChannelToSwitcher(roomName); // Add the room to the switcher
-                switchChannel(roomName); // Switch to the selected channel
-        }
-            });
-    
+        const roomLink = row.querySelector('.room-link');
+        const doorClosed = row.querySelector('img[src="MSN/aoldoorclosed.png"]');
+        const doorOpen = row.querySelector('img[src="MSN/aoldooropen.png"]');
+        
+        roomLink.addEventListener('click', () => {
             sessionStorage.setItem('hasInteracted', 'true');
+            if (roomName !== "%#RoomList") {
+                // Play door sound immediately
+                playSound("Door-sound");
+        
+                // Add fade-out effect for the closed door
+                doorClosed.style.transition = "opacity 0.3s ease";
+                doorClosed.style.opacity = "0";
+        
+                setTimeout(() => {
+                    doorClosed.style.display = "none"; // Hide after fade-out
+                    doorOpen.style.display = "inline"; // Show the open door
+                    doorOpen.style.opacity = "0"; // Start from invisible
+                    doorOpen.style.transition = "opacity 0.3s ease";
+                    doorOpen.style.opacity = "1"; // Fade-in effect
+                }, 300);
+        
+                // Delay channel switching to allow animation to complete
+                setTimeout(() => {
+                    addChannelToSwitcher(roomName); // Add the room to the switcher
+                    switchChannel(roomName); // Switch to the selected channel
+                }, 600); // 600ms ensures animation is fully visible before switching
+            }
+        });
+        
+            
+    
+            
+        
         });
     }
 

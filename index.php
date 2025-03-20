@@ -1,650 +1,393 @@
+<?php
+// Extract the channel name from the URL parameter 'rm'
+// Extract the channel name from the URL parameter 'rm'
+$channelName = htmlspecialchars($_GET['rm'] ?? $_POST['channel-name']); // Default to 'Unnamed Channel' if not provided
+// Extract the nickname from the URL parameter 'nickname'
+$nickname = htmlspecialchars($_GET['nickname'] ?? ''); // Default to empty string if not provided
+
+// Extract other parameters from POST data
+$category = htmlspecialchars($_POST['category'] ?? 'General');
+$channelTopic = htmlspecialchars($_POST['channel-topic'] ?? ''); // Default to empty string
+$language = htmlspecialchars($_POST['language'] ?? 'English');
+$profanityFilter = htmlspecialchars($_POST['profanity-filter'] ?? 'disabled');
+$ownerkey = htmlspecialchars($_POST['ownerkey'] ?? 'No Ownerkey');
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title></title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            background: #fff;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-        }
-        h1, h2 {
-            text-align: center;
-            color: #333;
-        }
-        h1 {
-            font-size: 2.5em;
-            margin: 0;
-        }
-        h2 {
-            font-size: 2em;
-            margin: 20px 0;
-        }
-        .category-dropdown {
-            margin-bottom: 10px;
-        }
-        .category-dropdown select {
-            padding: 10px;
-            font-size: 1.2em;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-            width: 100%;
-            max-width: 400px;
-        }
-        .create-channel-link {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .create-channel-link a {
-            font-size: 0.9em;
-            color: #0078d7;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .create-channel-link a:hover {
-            text-decoration: underline;
-        }
-        .room-list {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            flex-grow: 1;
-            overflow-x: auto;
-        }
-        .room-list th, .room-list td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-            font-size: 1.1em;
-        }
-        .room-list th {
-            background-color: #f8f8f8;
-            font-size: 1.2em;
-        }
-        .room-list tr {
-            background-color: #e3e3d270; /* Pinkish tan */
-        }
-        .room-list tr:nth-child(even) {
-            background-color: #feffed; /* Darker tan for even rows */
-        }
-        .room-list tr:hover {
-            background-color: rgba(255, 255, 255, 0.9);
-        }
-        .pagination, .pagination2 {
-            text-align: center;
-            margin-top: 20px;
-
-        }
-        .pagination button {
-            margin: 9px;
-        }
-        .pagination {
-            margin: 0 10px;
-            text-decoration: none;
-            color: #333;
-            font-size: 1.1em;
-            padding: 10px 15px;
-            display: inline-block;
-            border-radius: 4px;
-            transition: background-color 0.3s ease;
-        }
-        .pagination a, .pagination2 a {
-            margin: 0 10px;
-            text-decoration: none;
-            color: #333;
-            font-size: 1.1em;
-            padding: 10px 15px;
-            display: inline-block;
-            border-radius: 4px;
-            transition: background-color 0.3s ease;
-        }
-        .pagination a:hover, .pagination2 a:hover {
-            color: #0078d7;
-            background-color: #f0f0f0;
-        }
-
-
-        .room-list a {
-    text-decoration: none; /* Removes underline */
-    color: #0078d7; /* Gives a nice blue color */
-    font-weight: bold; /* Makes the text bold */
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Uses a nice font */
-    transition: color 0.3s ease; /* Smooth transition on hover */
-}
-
-.room-list a:hover {
-    color: #005a8a; /* Darker blue on hover */
-}
-
-        /* Responsive Design */
-        @media (max-width: 858px) {
-            .create-channel-link {
-                position: relative;
-                top: 29px;
-            }
-            .pagination a, .pagination2 a {
-                padding: 8px 12px;
-                font-size: 1em;
-            }
-        }
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2em;
-            }
-            h2 {
-                font-size: 1.5em;
-            }
-            .category-dropdown select {
-                font-size: 1em;
-                padding: 8px;
-            }
-            .room-list th, .room-list td {
-                padding: 10px;
-                font-size: 0.9em;
-            }
-            .room-list th {
-                font-size: 1em;
-            }
-            .pagination a, .pagination2 a {
-                padding: 8px 12px;
-                font-size: 1em;
-            }
-        }
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 1.5em;
-            }
-            h2 {
-                font-size: 1.2em;
-            }
-            .category-dropdown select {
-                font-size: 0.9em;
-                padding: 6px;
-            }
-            .room-list th, .room-list td {
-                padding: 8px;
-                font-size: 0.8em;
-            }
-            .room-list th {
-                font-size: 0.9em;
-            }
-            .pagination a, .pagination2 a {
-                padding: 6px 10px;
-                font-size: 0.9em;
-            }
-        }
-        @media (max-width: 385px) {
-            .pagination {
-                position: relative;
-                top: 9px;
-                left: 20px;
-            }
-        }
- 
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            background: #fff;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-        }
-        h1, h2 {
-            text-align: center;
-            color: #333;
-        }
-        h1 {
-            font-size: 2.5em;
-            margin: 0;
-        }
-        h2 {
-            font-size: 2em;
-            margin: 20px 0;
-        }
-        .category-dropdown {
-            margin-bottom: 10px;
-        }
-        .category-dropdown select {
-            padding: 10px;
-            font-size: 1.2em;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-            width: 100%;
-            max-width: 400px;
-        }
-        .create-channel-link {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .create-channel-link a {
-            font-size: 0.9em;
-            color: #0078d7;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .create-channel-link a:hover {
-            text-decoration: underline;
-        }
-        .room-list {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            flex-grow: 1;
-            overflow-x: auto;
-        }
-        .room-list th, .room-list td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-            font-size: 1.1em;
-        }
-        .room-list th {
-            background-color: #f8f8f8;
-            font-size: 1.2em;
-        }
-        .room-list tr {
-            background-color: #e3e3d270; /* Pinkish tan */
-        }
-        .room-list tr:nth-child(even) {
-            background-color: #feffed; /* Darker tan for even rows */
-        }
-        .room-list tr:hover {
-            background-color: rgba(255, 255, 255, 0.9);
-        }
-        .pagination, .pagination2 {
-            text-align: center;
-            margin-top: 20px;
-
-        }
-        .pagination button {
-            margin: 9px;
-        }
-        .pagination {
-            margin: 0 10px;
-            text-decoration: none;
-            color: #333;
-            font-size: 1.1em;
-            padding: 10px 15px;
-            display: inline-block;
-            border-radius: 4px;
-            transition: background-color 0.3s ease;
-        }
-        .pagination a, .pagination2 a {
-            margin: 0 10px;
-            text-decoration: none;
-            color: #333;
-            font-size: 1.1em;
-            padding: 10px 15px;
-            display: inline-block;
-            border-radius: 4px;
-            transition: background-color 0.3s ease;
-        }
-        .pagination a:hover, .pagination2 a:hover {
-            color: #0078d7;
-            background-color: #f0f0f0;
-        }
-
-
-        .room-list a {
-    text-decoration: none; /* Removes underline */
-    color: #0078d7; /* Gives a nice blue color */
-    font-weight: bold; /* Makes the text bold */
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Uses a nice font */
-    transition: color 0.3s ease; /* Smooth transition on hover */
-}
-
-.room-list a:hover {
-    color: #005a8a; /* Darker blue on hover */
-}
-
-        /* Responsive Design */
-        @media (max-width: 858px) {
-            .create-channel-link {
-                position: relative;
-                top: 29px;
-            }
-            .pagination a, .pagination2 a {
-                padding: 8px 12px;
-                font-size: 1em;
-            }
-        }
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2em;
-            }
-            h2 {
-                font-size: 1.5em;
-            }
-            .category-dropdown select {
-                font-size: 1em;
-                padding: 8px;
-            }
-            .room-list th, .room-list td {
-                padding: 10px;
-                font-size: 0.9em;
-            }
-            .room-list th {
-                font-size: 1em;
-            }
-            .pagination a, .pagination2 a {
-                padding: 8px 12px;
-                font-size: 1em;
-            }
-        }
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 1.5em;
-            }
-            h2 {
-                font-size: 1.2em;
-            }
-            .category-dropdown select {
-                font-size: 0.9em;
-                padding: 6px;
-            }
-            .room-list th, .room-list td {
-                padding: 8px;
-                font-size: 0.8em;
-            }
-            .room-list th {
-                font-size: 0.9em;
-            }
-            .pagination a, .pagination2 a {
-                padding: 6px 10px;
-                font-size: 0.9em;
-            }
-        }
-        @media (max-width: 385px) {
-            .pagination {
-                position: relative;
-                top: 9px;
-                left: 20px;
-            }
-        }
-
-        /* Add this to your existing CSS */
-        .nickname-container {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .nickname-display {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #333;
-            margin-right: 10px;
-        }
-        .nickname-edit {
-            font-size: 1em;
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-right: 10px;
-        }
-        .nickname-save {
-            padding: 5px 10px;
-            font-size: 1em;
-            background-color: #0078d7;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .nickname-save:hover {
-            background-color: #005a8a;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Welcome to ircx.saintsrow.net</title>
+    <link rel="stylesheet" href="chatroomxxx.css">
+    <link rel="stylesheet" href="styles.css">
+    <link href="chat.css" rel="stylesheet" type="text/css">
 </head>
-<body>
-    <div class="container">
-        <!-- Add this section for the nickname -->
-        <div class="nickname-container">
-            <span class="nickname-display" id="nicknameDisplay"></span>
-            <input type="text" class="nickname-edit" id="nicknameEdit" placeholder="Edit your nickname" style="display: none;">
-            <button class="nickname-save" id="nicknameSave" style="display: none;">Save</button>
-            <button class="nickname-save" id="nicknameEditButton">Edit Nickname</button>
-        </div>
+<body topmargin="0" leftmargin="0" oncontextmenu="return false" ondragstart="return false">
+<div id="master-head">
+<table border="0" width="100%" cellspacing="0" cellpadding="0" style="
+    background-color: #336699;
+">
+  <tbody style="
+    position: relative;
+    top: 80px;
+"><tr valign="top">
+   <td width="87%" valign="top">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+     <tbody><tr>
+      <td><a href="http://chat.msn.com/default.msnw" target="_top" title="Go to the MSN Chat home 
+page."><img height="32" align="absmiddle" src="MSN\chatlogo.gif" border="0" style="
+    position: relative;
+    top: 33px;
+"></a></td>
+      <td valign="bottom" width="51"><img src="MSN\sharkfin.gif" width="51" height="32" style="
+    position: relative;
+    top: 9px;
+"></td>
+      <td valign="top" class="titleframe" width="100%">
+       <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tbody style="
+    background-color: #336699;
+"><tr style="
+    position: relative;
+    top: 0px;
+">
+         <td><img border="0" height="7" width="100%" src="MSN\top_line.gif" style="
+    position: relative;
+    top: 52px;
+    z-index: 999999999;
+"></td>
+        </tr>
+        <tr>
+         <td>
+          <table border="0" cellpadding="0" cellspacing="0" width="100%" style="
+    position: relative;
+    top: -2px;
+">
+           <tbody style="
+"><tr style="
+    position: relative;
+    top: 38px;
+">
+            
+            <td></td><td><p id="roomtitle" class="roomtitle" style="
+    position: relative;
+    top: -9px;
+">SomeWhere</p></td>
+            
+           </tr>
+          </tbody></table>
+         </td>
+        </tr>
+       </tbody></table>
+      </td></tr>
+     <tr class="titleframe">
+      <td colspan="2" style="
+    position: relative;
+    top: 0px;
+"><img border="0" width="161" height="6" src="MSN\left_top_line.gif" style="
+    position: relative;
+    top: -2px;
+"></td>
+      <td><img height="1" width="1" src="MSN\pixel1x1.gif" border="0"></td>
+     </tr>
+     <tr class="titleframe">
+      <td colspan="4">
+    <center>
+       <table border="0" cellpadding="2" cellspacing="0">
+        <tbody><tr style="
+    display: flex;
+    flex-direction: row-reverse;
+">
+         <td><img border="0" width="5" height="1" src="MSN\c.gif" style="
+    z-index: 9999999;
+    /* position: relative; */
+    /* top: -82px; */
+"></td>
+     	 <td align="center" width="19"></td>
+     	 <td align="center" width="19"><img height="15" width="1" src="MSN\y1x1.gif"></td>
+         <td><a class="HeaderLink" href="http://chat.msn.com/default.msnw" target="_top" title="Go to the MSN Chat home page.">Chat Home</a></td>
+         <td align="center" width="19"><img height="15" width="1" src="MSN\y1x1.gif"></td>
+         <td><a class="HeaderLink" href="javascript:window.open('http://chat.msn.com/default.msnw'); void('');" title="Connect to 
+other rooms from the Chat directory.">More Rooms</a></td>
+         <td align="center" width="19"><img height="15" width="1" src="MSN\y1x1.gif"></td>
+         <td><a class="HeaderLink" href="javascript:window.open('http://chat.msn.com/friend.msnw?mode=2&amp;code=6225150
+0'); void('');" title="Find out if a friend is chatting right now.">Find a Friend</a></td>
+         <td align="center" width="19"><img height="15" width="1" src="MSN\y1x1.gif"></td>
+         <td><a class="HeaderLink" href="javascript:window.open('http://vipercentral.vze.com/m_options.php','_blank','tool
+bar=0,location=0,directories=0,status=0,menubar=0,scrollbars=1,resizable=1,height=420,wi
+dth=630'); void('');" title="View and change your chat room options.">Chat Room 
+Options</a></td>
+         <td align="center" width="19"><img height="15" width="1" src="MSN\y1x1.gif"></td>
+         <td><a class="HeaderLink" href="http://chat.msn.com/default.msnw" target="_top" title="Leave this chat room.">Exit</a></td>
+         <td align="center" width="19"><img height="15" width="1" src="MSN\y1x1.gif"></td>
+         <td><a class="HeaderLink" href="javascript:window.open('http://chat.msn.com/PaneHelpFrame.msnw?H_VER=1.7','
+_blank','toolbar=0,location=0,directories=0,status=0,men
+ubar=0,scrollbars=1,resizable=1,height=542,width=177,Left=610,top=0'); void('');" title="Get 
+instructions and tips for using MSNChat.">Help</a></td>
+	     <td align="center" width="19"><img height="15" width="1" src="MSN\y1x1.gif"></td>
+         <td nowrap=""><a class="HeaderLink" href="javascript:window.open('http://chat.msn.com/PaneHelpFrame.msnw?H_VER=1.7&amp;
+TOPIC=CHAT_PROC_ProtectYourselfFromHarassment.htm&amp;v1','_blank','toolbar=0,locatio
+n=0,directories=0,status=0,menubar=0,s
+crollbars=1,resizable=1,height=542,width=177,Left=610,top=0'); void('');" title="Learn how 
+to keep other chatters from harrassing you.">Stop Abuse</a></td>
+         <td align="center" width="19"><img height="15" width="1" src="MSN\y1x1.gif"></td>
+         <td align="center" width="19"></td>
+        </tr>
+       </tbody></table>
+    </center>
+      </td>
+     </tr>
+    </tbody></table>
 
-        <!-- Rest of your existing HTML -->
-        <h1></h1>
-        <div class="pagination">
-            <div id="paginationContainer" style="display: none;"></div>
+    <table width="100%" border="0" cellspacing="0" cellpadding="0"><!-- rem:bgcolor="#2288BB" -->
+     <tbody><tr>
+      <td valign="top" width="87%">
+      </td>
+     </tr>
+    </tbody></table>
+   </td></tr>
+  <tr>
+   <td></td>
+    </tr>
+   </tbody></table>
+</div>
+<div class="switch">
+    <select id="channel-switcher">
+        <option value="RoomList">ircx.saintsrow.net</option>
+    </select>
+</div>
+<div id="RoomList" class="tabcontent">
+        <!-- Room List Section -->
+        <div class="roomlist-container">
+            <div class="roomlist-nickname-container">
+                <span class="roomlist-nickname-display" id="nicknameDisplay"></span>
+                <input type="text" class="roomlist-nickname-edit" id="nicknameEdit" placeholder="Edit your nickname" style="display: none;">
+                <button class="roomlist-nickname-save" id="nicknameSave" style="display: none;">Save</button>
+                <button class="roomlist-nickname-save" id="nicknameEditButton">Edit Nickname</button>
+            </div>
+            <h1 class="roomlist-h1"></h1>
+            <div class="roomlist-pagination">
+                <div id="paginationContainer" style="display: none;"></div>
+            </div>
+            <div class="roomlist-category-dropdown">
+                <label for="category">Select Category:</label>
+                <select id="category" name="category">
+                    <option value="GN">General</option>
+                    <option value="VG">Gaming</option>
+                    <option value="C">Computing</option>
+                    <option value="CT">Conspiracies</option>
+                    <option value="NW">News</option>
+                    <option value="PT">Politics</option>
+                </select>
+            </div>
+            <div class="roomlist-create-channel-link">
+                <a href="#" onclick="openSection('CreateChannel', document.querySelector('.tablink'))">Don't see what you want? Create a channel</a>
+            </div>
+            <table class="roomlist-room-list">
+                <thead>
+                    <tr>
+                        <th>Users</th>
+                        <th>Room Name</th>
+                        <th>Topic</th>
+                        <th>Language</th>
+                    </tr>
+                </thead>
+                <tbody id="roomListBody">
+                    <!-- Rows will be dynamically populated here -->
+                </tbody>
+            </table>
         </div>
-        <div class="category-dropdown">
-            <label for="category">Select Category:</label>
-            <select id="category" name="category">
-                <option value="GN">General</option>
-                <option value="VG">Gaming</option>
-                <option value="C">Computing</option>
-                <option value="CT">Conspiracies</option>
-                <option value="NW">News</option>
-                <option value="PT">Politics</option>
-            </select>
+    </div>
+    <div id="CreateChannel" class="tabcontent" style="display:none;">
+        <!-- Create Channel Section -->
+        <div class="createchannel-container">
+            <div class="createchannel-return-link">
+                <a href="#" onclick="openSection('RoomList', document.querySelector('.tablink'))">Return to Channel List</a>
+            </div>
+            <h1 class="createchannel-h1"></h1>
+            <form id="channel-form" action="chatroom.php" method="POST">
+                <div class="createchannel-form-section">
+                    <div class="createchannel-horizontal-group">
+                        <div class="createchannel-form-group">
+                            <label for="category">Select Category:</label>
+                            <select id="category" name="category">
+                                <option value="Computing">Computing</option>
+                                <option value="Conspiracies">Conspiracies</option>
+                                <option value="Gaming">Gaming</option>
+                                <option value="General" selected>General</option>
+                                <option value="News">News</option>
+                                <option value="Politics">Politics</option>
+                            </select>
+                        </div>
+                        <div class="createchannel-form-group">
+                            <label for="language">Language:</label>
+                            <select id="language" name="language" required>
+                                <option value="English">English</option>
+                                <option value="French">French</option>
+                                <option value="German">German</option>
+                                <option value="Japanese">Japanese</option>
+                                <option value="Swedish">Swedish</option>
+                                <option value="Dutch">Dutch</option>
+                                <option value="Korean">Korean</option>
+                                <option value="Chinese (Simplified)">Chinese (Simplified)</option>
+                                <option value="Portuguese">Portuguese</option>
+                                <option value="Finnish">Finnish</option>
+                                <option value="Danish">Danish</option>
+                                <option value="Russian">Russian</option>
+                                <option value="Italian">Italian</option>
+                                <option value="Norwegian">Norwegian</option>
+                                <option value="Chinese (Traditional)">Chinese (Traditional)</option>
+                                <option value="Spanish">Spanish</option>
+                                <option value="Czech">Czech</option>
+                                <option value="Greek">Greek</option>
+                                <option value="Hungarian">Hungarian</option>
+                                <option value="Polish">Polish</option>
+                                <option value="Slovene">Slovene</option>
+                                <option value="Turkish">Turkish</option>
+                                <option value="Slovak">Slovak</option>
+                                <option value="Portuguese (Brazilian)">Portuguese (Brazilian)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="createchannel-form-section">
+                    <div class="createchannel-form-group">
+                        <label for="channel-name">Channel Name:</label>
+                        <input type="text" id="channel-name" name="channel-name" placeholder="Enter channel name" required>
+                    </div>
+                </div>
+                <div class="createchannel-form-section">
+                    <div class="createchannel-form-group">
+                        <label for="channel-topic">Topic of the Channel:</label>
+                        <textarea id="channel-topic" name="channel-topic" placeholder="Enter the topic of the channel" required></textarea>
+                    </div>
+                </div>
+                <div class="createchannel-form-section">
+                    <div class="createchannel-horizontal-group">
+                        <div class="createchannel-form-group">
+                            <label for="ownerkey">Ownerkey:</label>
+                            <input type="text" id="ownerkey" name="ownerkey" placeholder="Generating..." readonly>
+                            <div class="createchannel-tooltip" id="ownerkey-tooltip">Copied to clipboard!</div>
+                        </div>
+                        <div class="createchannel-form-group">
+                            <label for="profanity-filter">Profanity Filter:</label>
+                            <select id="profanity-filter" name="profanity-filter" required>
+                                <option value="disabled" selected>Disabled</option>
+                                <option value="enabled">Enabled</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="createchannel-form-section">
+                    <div class="createchannel-form-group">
+                        <label for="nickname">Nickname:</label>
+                        <input type="text" id="nickname" name="nickname">
+                    </div>
+                </div>
+                <div class="createchannel-navigation-buttons">
+                    <button type="submit">Create Channel</button>
+                </div>
+            </form>
         </div>
-        <div class="create-channel-link">
-            <a href="create2.php">Don't see what you want? Create a channel</a>
-        </div>
-        <table class="room-list">
-            <thead>
-                <tr>
-                    <th>Users</th>
-                    <th>Room Name</th>
-                    <th>Topic</th>
-                    <th>Language</th>
-                </tr>
-            </thead>
-            <tbody id="roomListBody">
-                <!-- Rows will be dynamically populated here -->
-            </tbody>
-        </table>
     </div>
 
+    <div id="ChatWindow" class="tabcontent">
+
+<div id="chat-container" class="chat-container">
+</div>
+</div>
+
+<div id="chat-input-container" class="chat-input-container">
+    <input type="text" id="chat-input" placeholder="Type your message here..." />
+    <button id="send-button">Send</button>
+</div>
+<div id="host-keyword-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>Log in as Host</h2>
+        <p>Enter the host keyword for this room:</p>
+        <input type="password" id="host-keyword-input" placeholder="Enter the host keyword..." />
+        <div class="modal-buttons">
+            <button id="submit-host-keyword" class="win2k-btn">OK</button>
+            <button id="cancel-host-keyword" class="win2k-btn">Cancel</button>
+        </div>
+    </div>
+</div>
+<div id="nicklist" class="nicklist">
+<div id="nicklist-container">
+    <ul id="nicklist-users">
+        <!-- Nicklist will be populated dynamically -->
+    </ul>
+</div>
+</div>
+<!-- Context Menu -->
+<div id="contextMenu" class="context-menu">
+    <ul>
+        <li data-action="viewProfile">View Profile</li>
+        <li data-action="whisper">Whisper</li>
+        <li data-action="ignore">Ignore</li>
+        <li class="separator"></li>
+        <li data-action="tagUser">Tag User</li>
+        <li data-action="localTime">Local Time</li>
+        <li class="submenu">
+            Kick
+            <ul>
+                <li data-action="disruptiveBehavior">Disruptive Behavior</li>
+                <li data-action="profanity">Profanity</li>
+                <li data-action="scrolling">Scrolling</li>
+                <li data-action="customKickBan">Custom Kick/Ban...</li>
+            </ul>
+        </li>
+        <li class="separator"></li>
+        <li data-action="host">Host</li>
+        <li data-action="participant">Participant</li>
+        <li data-action="spectator">Spectator</li>
+    </ul>
+</div>
+
+    <!-- Audio element for the sound -->
+    <audio id="connected-sound">
+        <source src="sounds/sounds/WAVE351.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+    <audio id="Door-sound">
+        <source src="sounds/sounds/door.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+    <audio id="join-sound">
+        <source src="sounds/sounds/WAVE351.3.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+    <audio id="kick-sound">
+        <source src="sounds/sounds/kick.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+    <audio id="kick-sound2">
+        <source src="sounds/sounds/kick1.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
+    <audio id="thunder-sound">
+        <source src="sounds/sounds/power-up-type-1.mp3" type="audio/mp3">
+        Your browser does not support the audio element.
+    </audio>
     <script>
-// Add this JavaScript to handle the nickname functionality
-const nicknameDisplay = document.getElementById('nicknameDisplay');
-const nicknameEdit = document.getElementById('nicknameEdit');
-const nicknameSave = document.getElementById('nicknameSave');
-const nicknameEditButton = document.getElementById('nicknameEditButton');
-
-// Function to generate a random nickname
-function generateRandomNickname() {
-    const adjectives = ['Happy', 'Silly', 'Brave', 'Clever', 'Swift', 'Gentle', 'Witty', 'Calm', 'Bold', 'Lucky'];
-    const nouns = ['Cat', 'Dog', 'Fox', 'Bear', 'Wolf', 'Lion', 'Tiger', 'Eagle', 'Hawk', 'Owl'];
-    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
-    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
-    return `${randomAdjective}${randomNoun}${Math.floor(Math.random() * 100)}`;
-}
-
-// Load or generate nickname
-let nickname = localStorage.getItem('nickname');
-if (!nickname) {
-    nickname = generateRandomNickname();
-    localStorage.setItem('nickname', nickname);
-}
-nicknameDisplay.textContent = `Nickname: ${nickname}`;
-
-// Toggle edit mode
-nicknameEditButton.addEventListener('click', () => {
-    nicknameDisplay.style.display = 'none';
-    nicknameEdit.style.display = 'inline-block';
-    nicknameSave.style.display = 'inline-block';
-    nicknameEditButton.style.display = 'none';
-    nicknameEdit.value = nickname;
-});
-
-// Save new nickname
-nicknameSave.addEventListener('click', () => {
-    const newNickname = nicknameEdit.value.trim();
-    if (newNickname) {
-        nickname = newNickname;
-        localStorage.setItem('nickname', nickname);
-        nicknameDisplay.textContent = `Nickname: ${nickname}`;
-        nicknameDisplay.style.display = 'inline-block';
-        nicknameEdit.style.display = 'none';
-        nicknameSave.style.display = 'none';
-        nicknameEditButton.style.display = 'inline-block';
-
-        // Update the room list with the new nickname
-        updateRoomList();
-    }
-});
-
-// Rest of your existing JavaScript
-const ws = new WebSocket('wss://chat.saintsrow.net/rm');
-let allChannels = {}; // Store all channels grouped by category
-
-ws.onopen = () => {
-    console.log('✅ Connected to WebSocket server');
-    ws.send(JSON.stringify({ type: 'requestLatest' })); // Request latest XML data
-};
-
-ws.onmessage = (event) => {
-    console.log("Received:", event.data);
-    const data = JSON.parse(event.data);
-    if (data.type === 'xmlUpdate') {
-        allChannels = groupChannelsByCategory(data.data); // Group channels by category
-        updateRoomList(); // Update the table with the default category
-    }
-};
-
-ws.onerror = (error) => console.error('❌ WebSocket Error:', error);
-
-ws.onclose = () => {
-    console.log('❌ WebSocket connection closed. Attempting to reconnect...');
-    setTimeout(() => {
-        // Reconnect after 5 seconds
-        const newWs = new WebSocket('wss://chat.saintsrow.net/rm');
-        newWs.onopen = ws.onopen;
-        newWs.onmessage = ws.onmessage;
-        newWs.onerror = ws.onerror;
-        newWs.onclose = ws.onclose;
-        ws = newWs;
-    }, 5000);
-};
-
-// Group channels by category
-function groupChannelsByCategory(data) {
-    const categories = data.Channels.Category;
-    const groupedChannels = {};
-
-    categories.forEach(category => {
-        const categoryName = category.$.Name;
-        groupedChannels[categoryName] = category.Channel || [];
-    });
-
-    return groupedChannels;
-}
-
-// Update the room list based on the selected category
-function updateRoomList() {
-    const roomListBody = document.getElementById('roomListBody');
-    const paginationContainer = document.getElementById('paginationContainer'); // Pagination wrapper
-    roomListBody.innerHTML = ''; // Clear existing rows
-
-    const selectedCategory = document.getElementById('category').value;
-    let channels = allChannels[selectedCategory] || [];
-
-    // Sort channels by user count in descending order
-    channels.sort((a, b) => {
-        const userCountA = a.UserCount?.[0] ? parseInt(a.UserCount[0], 10) : 0;
-        const userCountB = b.UserCount?.[0] ? parseInt(b.UserCount[0], 10) : 0;
-        return userCountB - userCountA;
-    });
-
-    // Pagination logic
-    const channelsPerPage = 6;
-    const totalChannels = channels.length;
-    const totalPages = Math.ceil(totalChannels / channelsPerPage);
-
-    // Hide pagination if less than 6 channels
-    paginationContainer.style.display = totalChannels > channelsPerPage ? 'block' : 'none';
-
-    let currentPage = 1; // Default to page 1
-    renderPage(currentPage, channels, channelsPerPage);
-
-    createPagination(totalPages, channels, channelsPerPage);
-}
-
-function renderPage(page, channels, channelsPerPage) {
-    const roomListBody = document.getElementById('roomListBody');
-    roomListBody.innerHTML = ''; // Clear previous content
-
-    const startIndex = (page - 1) * channelsPerPage;
-    const endIndex = startIndex + channelsPerPage;
-    const visibleChannels = channels.slice(startIndex, endIndex);
-
-    visibleChannels.forEach(channel => {
-        const userCount = channel.UserCount?.[0] ? parseInt(channel.UserCount[0], 10) : 0;
-        let roomName = channel.$.Name || 'Unnamed Room';
-
-        // Remove %# from room names
-        roomName = roomName.replace(/^%#/, '');
-
-        // Replace \b with a space in the room name
-        roomName = roomName.replace(/\\b/g, ' ');
-
-        // Replace \b with a space in the topic
-        let topic = (channel.Topic?.[0] || 'No topic').replace(/\\b/g, ' ');
-
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${userCount}</td>
-            <td><a href="chatroom.php?rm=${encodeURIComponent(roomName)}&nickname=${encodeURIComponent(nickname)}">${roomName}</a></td>
-            <td>${topic}</td>
-            <td>${channel.$.Language?.[0] || 'Unknown'}</td>
-        `;
-        roomListBody.appendChild(row);
-        sessionStorage.setItem('hasInteracted', 'true');
-    });
-}
-
-function createPagination(totalPages, channels, channelsPerPage) {
-    const paginationContainer = document.getElementById('paginationContainer');
-    paginationContainer.innerHTML = ''; // Clear previous pagination
-
-    for (let i = 1; i <= totalPages; i++) {
-        const pageButton = document.createElement('button');
-        pageButton.innerText = i;
-        pageButton.addEventListener('click', () => renderPage(i, channels, channelsPerPage));
-        paginationContainer.appendChild(pageButton);
-    }
-}
-
-// Add event listener to the category dropdown
-document.getElementById('category').addEventListener('change', updateRoomList);
-
-// Optional: Periodic refresh (if WebSocket does not push updates automatically)
-setInterval(() => {
-    if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'requestLatest' })); // Request latest data
-    }
-}, 30000); // Refresh every 30 seconds
+        // Pass PHP variables to JavaScript
+        const category = "<?php echo $category; ?>";
+        const channelName = "<?php echo $channelName; ?>"; // Use the channelName from the URL parameter
+      //  const channel = channelName;
+        // currentChannel = channelName;
+        const channelTopic = "<?php echo $channelTopic; ?>"; // Empty string if not provided
+        const language = "<?php echo $language; ?>";
+        const profanityFilter = "<?php echo $profanityFilter; ?>";
+        const ownerkey = "<?php echo $ownerkey; ?>";
+       // let nickname = "<?php echo $nickname; ?>"; // Use the nickname from the URL parameter
+       // nickname = nickname.replace(" ","");
     </script>
+
+    <script>
+  // connectWebSocket(channel);
+        </script>
+</div>
 </body>
+<script src="chatroomv5.js"></script>
 </html>

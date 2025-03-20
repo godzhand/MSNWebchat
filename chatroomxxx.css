@@ -92,15 +92,18 @@ a:hover {
     display: "contents";
 } 
 .chat-box {
-    flex: 1;
+    /* flex: 1; */
     padding: 20px;
     box-sizing: border-box;
     overflow-y: scroll;
     overflow-x: hidden;
     scrollbar-width: thin;
     scrollbar-color: #6a8fcc #f9f9f9;
-    max-height: 84%;
+    /* max-height: 75%; */
     margin-bottom: 63px;
+    background-color: #fff;
+    margin-left: 5px;
+    border-radius: 5px 5px 5px 5px;
 }
 
 .chat-box::-webkit-scrollbar {
@@ -132,8 +135,8 @@ a:hover {
     position: fixed;
     bottom: 0;
     left: 0;
-    width: 77%;
-    background-color: #feffed;
+    width: 75%;
+    background-color: #2288bb;
     padding: 10px;
     box-sizing: border-box;
     border-top: 2px solid #ccc;
@@ -479,7 +482,20 @@ a:hover {
         left: 229px;
         top: 40px;
     }
+    .chat-box {
 
+/* max-height: calc(100vh - 64px); */
+
+background-color: white;
+
+position: relative;
+
+top: 1%;
+
+min-height: calc(100vh - 210px);
+
+max-height: calc(100vh - 210px);
+}
     .chat-input-container #user-count {
         display: block;
         font-size: 12px;
@@ -545,7 +561,7 @@ a:hover {
     }
 
     .chat-box {
-        width: 77%;
+        width: 74%;
         display: block;
     }
 }
@@ -563,31 +579,29 @@ a:hover {
         display: none;
     }
     #channel-switcher {
-        position: absolute;
-        right: 32px;
-        top: 24px;
+        position: relative;
+        right: 0px;
+        top: 45px;
         width: 340px;
-        z-index: 1;
+        /* z-index: 1; */
     }
     html {
         overflow-y: hidden;
     }
-    .nicklist {
-width: 20%;
-        right: 0%;
-        max-height: 67%;
-        top: 125px;
-    }
+    .nicklist {width: 20%;right: 0%;min-height: 59%;top: 115px;padding: 17px;right: 29px;}
 
     .nicklist.open {
         right: -70%;
     }
-
+.chat-container {
+	top: -51px;
+}
     .chat-box {
-        width: 78%;
-        max-height: 80%;
-
-        
+        width: 75%;
+        height: calc(100vh - 147px);
+        margin-left: 7px;
+        margin-top: 7px;
+        border-radius: 16px 0px 0px 16px;
     }
 }
 .roomlist-room-list {
@@ -616,9 +630,16 @@ width: 20%;
 }
 
 @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
-    .chat-input-container {
+   #RoomList {
+	   display: flow;
+   }
+	.chat-input-container {
         width: 75%;
     }
+	.chat-container {
+		
+top: -58px;
+	}
     .header .channel-name {
         position: relative;
         top: 0px;
@@ -628,15 +649,16 @@ width: 20%;
     #channel-switcher {
         position: absolute;
         right: 23px;
-        top: 24px;
-        width: 189px;
+        top: 86px;
+        width: 203px;
     }
     .nicklist {
-        width: 25%;
-        right: -5%;
-        top: 122px;
-        max-height: 49%;
-
+        width: 19%;
+        right: 1%;
+        top: 104px;
+        min-height: 65%;
+        /* margin-left: -26px; */
+        padding: 16px;
     }
 
     html, body {
@@ -647,8 +669,9 @@ width: 20%;
     }
 
     .chat-box {
-        width: 75%;
-        max-height: 70%;
+        width: 74.8%;
+        min-height: calc(100vh - 131px);
+        max-height: calc(100vh - 131px);
     }
 }
 
@@ -659,10 +682,10 @@ width: 20%;
     }
     #channel-switcher {
         position: absolute;
-        top: -9px;
+        top: 28px;
         left: 4px;
-    z-index: 7;
-    width: 153px;
+        z-index: 7;
+        width: 187px;
     }
 .chat-input-container {
 width: 100%;

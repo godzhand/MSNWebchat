@@ -1,0 +1,29 @@
+body {
+	scrollbar-face-color: rgb(34, 136, 198); scrollbar-arrow-color: rgb(169, 254, 252); scrollbar-highlight-color: #95c5f4; scrollbar-3dlight-color: rgb(169, 254, 252); scrollbar-shadow-color: rgb(169, 254, 252); scrollbar-darkshadow-color: #95c5f4;
+	background-color: rgb(34, 136, 187)
+	}
+	
+	.ChatTitle {
+		FONT: bold 16pt arial; COLOR: #000066; TEXT-DECORATION: none
+	}
+	.ChatFindTitle {
+		FONT: bold 16pt helvetica; COLOR: #000066; TEXT-DECORATION: none
+	}
+	A.HeaderLink {
+		FONT-SIZE: 71%; COLOR: #ffffff; FONT-FAMILY: verdana,sans-serif; TEXT-DECORATION: none
+	}
+	A.HeaderLink:hover {
+		COLOR: rgb(169, 254, 252); TEXT-DECORATION: underline overline
+	}
+	.roomtitle {
+		FONT-SIZE: 16pt;
+		COLOR:#FFFFFF;
+		/* text-align: center; */
+		text-overflow: ellipsis;
+		vertical-align: middle;
+		background-color: rgb(34, 136, 187);
+	}
+	
+	.titleframe {
+	background-color: rgb(34, 136, 187);
+	}

@@ -359,7 +359,7 @@ wss.on('connection', (ws) => {
 
                 wsClients.forEach((info, ws) => {
                     if (info.channel === channel && ws.readyState === WebSocket.OPEN && info.nickname === nickname) {
-                        ws.send(JSON.stringify({ type: 'nicklist', users, userCount }));
+                        ws.send(JSON.stringify({ type: 'nicklist', channel, users, userCount }));
                         ws.send(JSON.stringify({ type: 'nicklist-count', users, userCount }));
                     }
                 
